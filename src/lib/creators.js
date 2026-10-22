@@ -7,17 +7,24 @@ function escapeLike(text) {
   return String(text).replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-/** Newest first, optionally filtered by a name search. */
+// A to Z, ignoring capitals and accents, with numbers in counting order
+// ("creator 2" before "creator 10").
+const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
+const aToZ = (rows) => rows.sort((a, b) => collator.compare(a.name, b.name) || Number(a.id) - Number(b.id));
+
+/** A to Z by name, optionally filtered by a name search. */
 export async function listCreators({ search = "" } = {}) {
   const q = search.trim();
   if (!q) {
-    return query(`SELECT ${CREATOR_FIELDS} FROM creators ORDER BY created_at DESC, id DESC`);
+    return aToZ(await query(`SELECT ${CREATOR_FIELDS} FROM creators ORDER BY lower(name), id`));
   }
-  return query(
-    `SELECT ${CREATOR_FIELDS} FROM creators
-      WHERE name ILIKE $1
-      ORDER BY created_at DESC, id DESC`,
-    [`%${escapeLike(q)}%`],
+  return aToZ(
+    await query(
+      `SELECT ${CREATOR_FIELDS} FROM creators
+        WHERE name ILIKE $1
+        ORDER BY lower(name), id`,
+      [`%${escapeLike(q)}%`],
+    ),
   );
 }
 
@@ -29,16 +36,16 @@ export function getCreatorById(id) {
   return queryOne(`SELECT ${CREATOR_FIELDS} FROM creators WHERE id = $1`, [id]);
 }
 
-/** For the admin panel: totals plus views in the last 7 days. */
-export function listCreatorsForAdmin() {
-  return query(
+/** For the admin panel, A to Z: totals plus views in the last 7 days. */
+export async function listCreatorsForAdmin() {
+  return aToZ(await query(
     `SELECT c.id, c.slug, c.name, c.tier, c.avatar_key, c.avatar_blur_key, c.view_count, c.created_at,
             (SELECT count(*)::int FROM media m WHERE m.creator_id = c.id) AS media_count,
             (SELECT count(*)::int FROM creator_views v
               WHERE v.creator_id = c.id AND v.view_date > current_date - 7) AS views_7d
        FROM creators c
-      ORDER BY c.created_at DESC, c.id DESC`,
-  );
+      ORDER BY lower(c.name), c.id`,
+  ));
 }
 
 export async function createCreator({ name, tier, avatarKey = null, avatarBlurKey = null }) {
