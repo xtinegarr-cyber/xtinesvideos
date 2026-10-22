@@ -18,9 +18,11 @@ memberships are sold with Stripe for $4.99/month.
 - Visitors without VIP get a VIP popup once per visit, after 60 seconds on
   the site.
 
-**Creator pages** (`/c/creator-name`)
-- Videos and photos in a grid. For VIP creators, visitors without VIP see
-  blurred thumbnails and a prompt to get VIP.
+**Creator pages** (`/creator_name`, e.g. a creator named "gamercool 123" is at
+`/gamercool_123`)
+- Videos and photos in a grid. Visitors without VIP who open a VIP
+  creator see only the creator's name and a "Get VIP" prompt, not the uploads.
+- Page titles read "gamercool 123 - Videos | XTINE’S VIDEOS" for search engines.
 - Each profile visit counts as a view, once per visitor per creator per day.
   Refreshing doesn't add views. Bots and admins aren't counted.
 
@@ -129,7 +131,7 @@ the VIP page explains that checkout isn't switched on yet.
 | Path | What it is |
 | --- | --- |
 | `src/app/page.js` | Homepage |
-| `src/app/c/[slug]/page.js` | Creator page |
+| `src/app/[slug]/page.js` | Creator page |
 | `src/app/admin/` | Admin panel and its actions |
 | `src/app/vip/`, `src/app/account/` | Buying and managing VIP |
 | `src/app/api/` | Uploads, view counting and the Stripe webhook |

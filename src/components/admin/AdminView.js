@@ -52,15 +52,15 @@ function CreatorRow({ creator, storageReady }) {
       </div>
       <div className="min-w-0 flex-1 basis-40">
         <p className="flex items-center gap-2">
-          <Link href={`/c/${creator.slug}`} className="truncate font-bold hover:underline">
+          <Link href={`/${creator.slug}`} className="truncate font-bold hover:underline">
             {creator.name}
           </Link>
           {creator.isNew && (
             <span className="rounded-full bg-rose px-2 py-0.5 text-[11px] font-bold leading-none text-white">New</span>
           )}
         </p>
-        <p className="text-xs text-muted">
-          Added {formatDate(creator.createdAt)}, {creator.mediaCount} {creator.mediaCount === 1 ? "upload" : "uploads"}
+        <p className="truncate text-xs text-muted">
+          <span className="text-fg/70">/{creator.slug}</span>, added {formatDate(creator.createdAt)}, {creator.mediaCount} {creator.mediaCount === 1 ? "upload" : "uploads"}
         </p>
       </div>
       <div className="w-28 text-sm">

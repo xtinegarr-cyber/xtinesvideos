@@ -21,17 +21,30 @@ export function isNew(createdAt, now = Date.now()) {
   return now - created < NEW_BADGE_HOURS * 60 * 60 * 1000;
 }
 
-/** "Mia Rose!" -> "mia-rose" */
+/**
+ * A creator's web address: "gamercool 123" -> "gamercool_123", so their
+ * profile lives at yoursite.com/gamercool_123.
+ */
 export function slugify(name) {
   const slug = String(name)
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{M}/gu, "") // drop accents: "Mía" -> "mia"
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
     .slice(0, 60);
   return slug || "creator";
 }
+
+/** Addresses the site itself uses, so no creator can take them. */
+export const RESERVED_SLUGS = new Set([
+  "admin", "login", "logout", "signup", "register", "vip", "account", "api",
+  "search", "settings", "help", "support", "about", "terms", "privacy",
+  "creators", "creator", "media", "static", "assets", "public",
+  "favicon", "robots", "sitemap", "_next",
+]);
+
+export const SLUG_PATTERN = /^[a-z0-9_]{1,64}$/;
 
 /** 75.4 -> "1:15", 3725 -> "1:02:05" */
 export function formatDuration(seconds) {

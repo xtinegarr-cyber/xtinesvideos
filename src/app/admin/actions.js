@@ -33,7 +33,7 @@ export async function deleteMediaAction(formData) {
   const removed = await deleteMedia(idFrom(formData, "mediaId"));
   if (removed) {
     await deleteFiles(removed.keys);
-    revalidatePath(`/c/${removed.slug}`);
+    revalidatePath(`/${removed.slug}`);
   }
 }
 

@@ -12,8 +12,10 @@ const brand = Bricolage_Grotesque({
 });
 
 export const metadata = {
+  // Lets pages give search engines their full address (e.g. canonical links).
+  metadataBase: process.env.SITE_URL ? new URL(process.env.SITE_URL) : undefined,
   title: "XTINE’S VIDEOS",
-  description: "Free and VIP creators.",
+  description: "Watch videos and photos from free and VIP creators.",
 };
 
 export const viewport = {

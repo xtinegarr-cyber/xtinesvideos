@@ -1,5 +1,5 @@
 import { query, queryOne } from "./db";
-import { slugify } from "./format";
+import { RESERVED_SLUGS, slugify } from "./format";
 
 const CREATOR_FIELDS = "id, slug, name, tier, avatar_key, avatar_blur_key, view_count, created_at";
 
@@ -43,8 +43,10 @@ export function listCreatorsForAdmin() {
 
 export async function createCreator({ name, tier, avatarKey = null, avatarBlurKey = null }) {
   const base = slugify(name);
-  for (let attempt = 1; attempt <= 50; attempt++) {
-    const slug = attempt === 1 ? base : `${base}-${attempt}`;
+  // A taken or reserved address gets a number: jadegamer -> jadegamer_2
+  const first = RESERVED_SLUGS.has(base) ? 2 : 1;
+  for (let attempt = first; attempt <= 50; attempt++) {
+    const slug = attempt === 1 ? base : `${base}_${attempt}`;
     const row = await queryOne(
       `INSERT INTO creators (slug, name, tier, avatar_key, avatar_blur_key)
        VALUES ($1, $2, $3, $4, $5)

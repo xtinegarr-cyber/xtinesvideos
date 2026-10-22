@@ -30,7 +30,7 @@ try {
     console.log("The site already has creators. Pass --force to add the demo ones anyway.");
   } else {
     for (const [name, tier, views, hoursAgo] of demo) {
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
       await client.query(
         `INSERT INTO creators (slug, name, tier, view_count, created_at)
          VALUES ($1, $2, $3, $4, now() - make_interval(hours => $5))

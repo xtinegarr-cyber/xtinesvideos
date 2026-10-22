@@ -56,11 +56,9 @@ export default function VipBanner({ priceLabel, previews = [] }) {
         )}
         <div className="min-w-0">
           <h2 className="text-lg font-extrabold leading-tight tracking-tight sm:text-2xl">
-            See every VIP creator without the blur
+            Access VIP creators for <span className="text-gold">{priceLabel}</span> a month
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            <span className="font-semibold text-gold">{priceLabel} a month.</span> Cancel anytime.
-          </p>
+          <p className="mt-1 text-sm text-muted">Every VIP profile, video and photo. Cancel anytime.</p>
         </div>
         <Link href="/vip" className="btn-vip col-span-2 h-12 w-full px-7 sm:ml-auto sm:w-auto sm:shrink-0">
           Get VIP

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { FiImage, FiLock, FiPlay, FiTrash2, FiX } from "react-icons/fi";
+import { FiImage, FiPlay, FiTrash2, FiX } from "react-icons/fi";
 import { formatDuration } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
 
@@ -51,7 +50,7 @@ function Viewer({ item, onClose }) {
   );
 }
 
-function Tile({ item, locked, onOpen }) {
+function Tile({ item, onOpen }) {
   const inner = (
     <>
       {item.thumbUrl ? (
@@ -60,18 +59,12 @@ function Tile({ item, locked, onOpen }) {
       ) : (
         <div className="absolute inset-0 bg-raised" />
       )}
-      {locked ? (
+      {item.kind === "video" && (
         <span className="absolute inset-0 grid place-items-center">
-          <FiLock aria-hidden className="size-8 text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" strokeWidth={1.75} />
-        </span>
-      ) : (
-        item.kind === "video" && (
-          <span className="absolute inset-0 grid place-items-center">
-            <span className="grid size-12 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
-              <FiPlay aria-hidden className="ml-0.5 size-5" />
-            </span>
+          <span className="grid size-12 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+            <FiPlay aria-hidden className="ml-0.5 size-5" />
           </span>
-        )
+        </span>
       )}
       <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-xs font-semibold text-white">
         {item.kind === "video" ? formatDuration(item.duration) : <FiImage aria-label="Photo" />}
@@ -80,13 +73,6 @@ function Tile({ item, locked, onOpen }) {
   );
 
   const className = "relative block aspect-square w-full overflow-hidden rounded-xl bg-panel ring-1 ring-line";
-  if (locked) {
-    return (
-      <Link href="/vip" className={className} aria-label="VIP only. Get VIP to unlock">
-        {inner}
-      </Link>
-    );
-  }
   return (
     <button type="button" onClick={() => onOpen(item)} className={`${className} hover:ring-muted`} aria-label={item.kind === "video" ? "Play video" : "Open photo"}>
       {inner}
@@ -94,7 +80,7 @@ function Tile({ item, locked, onOpen }) {
   );
 }
 
-export default function MediaGrid({ items, locked, canManage }) {
+export default function MediaGrid({ items, canManage }) {
   const [open, setOpen] = useState(null);
 
   if (items.length === 0) {
@@ -110,7 +96,7 @@ export default function MediaGrid({ items, locked, canManage }) {
       <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
         {items.map((item) => (
           <li key={item.id} className="relative">
-            <Tile item={item} locked={locked} onOpen={setOpen} />
+            <Tile item={item} onOpen={setOpen} />
             {canManage && (
               <form
                 action={deleteMediaAction}

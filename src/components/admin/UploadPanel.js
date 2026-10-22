@@ -59,7 +59,7 @@ function StatusLine({ item }) {
       return (
         <span className="inline-flex items-center gap-1.5 text-[#9be4b8]">
           <FiCheckCircle aria-hidden /> Live on{" "}
-          <Link href={`/c/${item.creatorSlug}`} className="underline underline-offset-2">
+          <Link href={`/${item.creatorSlug}`} className="underline underline-offset-2">
             {item.creatorName}’s page
           </Link>
         </span>

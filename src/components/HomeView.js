@@ -16,9 +16,9 @@ function Grid({ creators }) {
   );
 }
 
-function SectionHeading({ title, count, children }) {
+function SectionHeading({ title, count, children, action }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
           {title}
@@ -26,6 +26,7 @@ function SectionHeading({ title, count, children }) {
         </h2>
         {children}
       </div>
+      {action}
     </div>
   );
 }
@@ -74,14 +75,7 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
               )}
             </section>
 
-            <section
-              aria-labelledby="vip-heading"
-              className="relative mt-16 overflow-hidden rounded-3xl border border-gold/20 bg-[linear-gradient(180deg,rgba(231,203,152,0.07),rgba(14,19,37,0.55)_160px)] px-4 pb-6 pt-7 sm:px-6"
-            >
-              <span
-                aria-hidden
-                className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent"
-              />
+            <section aria-labelledby="vip-heading" className="mt-16">
               <SectionHeading
                 title={
                   <span id="vip-heading" className="inline-flex items-center gap-2.5">
@@ -90,6 +84,13 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
                   </span>
                 }
                 count={vip.length}
+                action={
+                  showVipPitch && (
+                    <Link href="/vip" className="btn-vip h-10 px-5 text-sm">
+                      Get VIP for {priceLabel}/month
+                    </Link>
+                  )
+                }
               >
                 <p className="mt-1.5 text-sm text-muted">
                   {viewer?.isVip
@@ -97,14 +98,6 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
                     : `Unlock every VIP profile for ${priceLabel} a month. Cancel anytime.`}
                 </p>
               </SectionHeading>
-              {showVipPitch && (
-                <Link
-                  href="/vip"
-                  className="btn-vip absolute right-6 top-7 hidden h-10 px-5 text-sm sm:inline-flex"
-                >
-                  Get VIP
-                </Link>
-              )}
               {vip.length ? (
                 <Grid creators={vip} />
               ) : (

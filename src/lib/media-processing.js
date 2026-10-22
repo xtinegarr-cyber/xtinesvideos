@@ -28,8 +28,10 @@ export function thumbnailTime(duration) {
   const d = Number(duration) || 0;
   return d > THUMB_AT_SECONDS ? THUMB_AT_SECONDS : d / 2;
 }
-// Shrinking to 32px wide before blurring destroys the detail for good.
-const BLUR_FILTER = `scale=32:-2,scale=${THUMB_WIDTH}:-2:flags=bicubic,gblur=sigma=14`;
+// Blur for locked VIP previews: you can tell what the picture is (a person,
+// their outfit, the setting) but not see details. Raise for more blur.
+const BLUR_SIGMA = 14;
+const BLUR_FILTER = `gblur=sigma=${BLUR_SIGMA}`;
 
 export class MediaError extends Error {}
 
@@ -199,7 +201,7 @@ export async function processAvatar(input, outDir) {
   ]);
   await run("ffmpeg", [
     "-y", "-v", "error", "-i", avatar, "-frames:v", "1",
-    "-vf", "scale=24:32,scale=600:800:flags=bicubic,gblur=sigma=14",
+    "-vf", BLUR_FILTER,
     "-q:v", "5", avatarBlur,
   ]);
   return { avatar, avatarBlur };

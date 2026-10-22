@@ -11,7 +11,7 @@ export default function CreatorCard({ creator }) {
   const vip = creator.tier === "vip";
   return (
     <Link
-      href={`/c/${creator.slug}`}
+      href={`/${creator.slug}`}
       className={`group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-panel ring-1 transition-[box-shadow] ${
         vip ? "ring-gold/35 hover:ring-gold/80" : "ring-line hover:ring-muted"
       }`}
