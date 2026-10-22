@@ -86,6 +86,9 @@ can share or guess a working link to locked content.
 5. **Domain:** add your domain in Coolify. Coolify sets up HTTPS for you.
 6. **Deploy.** On first start the site creates its database tables and the
    `xtinegar` admin account using `ADMIN_PASSWORD`. Log in at `/login`.
+   To change the admin password later, change `ADMIN_PASSWORD` and restart.
+   If you can't log in, the site's **Logs** in Coolify say whether the admin
+   account was created (for example, if the password was too short).
 
 Optional: run `npm run seed:demo` once to add placeholder creators and see
 the layout, then delete them from the admin panel.

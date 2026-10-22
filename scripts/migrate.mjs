@@ -1,7 +1,7 @@
 // Runs before the site starts: creates/updates the database tables and
 // makes sure the admin account exists. Safe to run any number of times.
 import { readFile } from "node:fs/promises";
-import { randomBytes, scrypt } from "node:crypto";
+import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import pg from "pg";
 
 for (const file of [".env.local", ".env"]) {
@@ -27,6 +27,19 @@ function hashPassword(password) {
   );
 }
 
+async function passwordMatches(password, stored) {
+  const parts = String(stored || "").split("$");
+  if (parts.length !== 6 || parts[0] !== "scrypt") return false;
+  const [, n, r, p, salt, key] = parts;
+  const expected = Buffer.from(key, "base64url");
+  const actual = await new Promise((resolve, reject) =>
+    scrypt(password, Buffer.from(salt, "base64url"), expected.length, { N: Number(n), r: Number(r), p: Number(p), maxmem: 64 * 1024 * 1024 }, (err, k) =>
+      err ? reject(err) : resolve(k),
+    ),
+  );
+  return timingSafeEqual(expected, actual);
+}
+
 async function connect() {
   // The database container can take a few seconds to start on deploy.
   for (let attempt = 1; ; attempt++) {
@@ -49,23 +62,34 @@ try {
   await client.query(schema);
   console.log("Database tables are ready.");
 
+  // The admin's password always matches ADMIN_PASSWORD: to change it, edit
+  // ADMIN_PASSWORD in Coolify and restart the site.
   const username = (process.env.ADMIN_USERNAME || "xtinegar").trim().toLowerCase();
-  const { rows } = await client.query("SELECT id, role FROM users WHERE username = $1", [username]);
-  if (rows.length === 0) {
-    if (!process.env.ADMIN_PASSWORD) {
-      console.warn(`No admin account yet. Set ADMIN_PASSWORD and restart to create "${username}".`);
-    } else if (process.env.ADMIN_PASSWORD.length < 12) {
-      console.warn("ADMIN_PASSWORD must be at least 12 characters. The admin account was not created.");
-    } else {
-      await client.query("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, 'admin')", [
-        username,
-        await hashPassword(process.env.ADMIN_PASSWORD),
-      ]);
-      console.log(`Created the admin account "${username}".`);
+  const password = process.env.ADMIN_PASSWORD ?? "";
+  const { rows } = await client.query("SELECT id, role, password_hash FROM users WHERE username = $1", [username]);
+  if (!password) {
+    console.warn(`ADMIN_PASSWORD is not set, so the admin account "${username}" can't be created or updated.`);
+  } else if (password.length < 12) {
+    console.warn(`ADMIN_PASSWORD is only ${password.length} characters. It must be at least 12, so "${username}" was not created or updated.`);
+  } else if (rows.length === 0) {
+    await client.query("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, 'admin')", [
+      username,
+      await hashPassword(password),
+    ]);
+    console.log(`Created the admin account "${username}".`);
+  } else {
+    const user = rows[0];
+    if (user.role !== "admin") {
+      await client.query("UPDATE users SET role = 'admin' WHERE id = $1", [user.id]);
+      console.log(`"${username}" is now an admin.`);
     }
-  } else if (rows[0].role !== "admin") {
-    await client.query("UPDATE users SET role = 'admin' WHERE id = $1", [rows[0].id]);
-    console.log(`"${username}" is now an admin.`);
+    if (!(await passwordMatches(password, user.password_hash))) {
+      await client.query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hashPassword(password), user.id]);
+      await client.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
+      console.log(`Updated the password for "${username}" to match ADMIN_PASSWORD.`);
+    } else {
+      console.log(`Admin account "${username}" is ready.`);
+    }
   }
 } finally {
   await client.end();
