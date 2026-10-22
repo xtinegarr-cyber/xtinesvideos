@@ -1,38 +1,44 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
-import { signupAndCheckoutAction, startCheckoutAction } from "@/app/vip/actions";
-import { Field, FormError, goldButton, inputClass } from "./forms";
+import { useFormStatus } from "react-dom";
+import { claimAccountAction, startCheckoutAction } from "@/app/vip/actions";
+import { Field, FormError, inputClass } from "./forms";
 
-export function CheckoutButton({ priceLabel }) {
-  const [state, formAction, pending] = useActionState(startCheckoutAction, { error: null });
+function CheckoutSubmit({ children, className }) {
+  const { pending } = useFormStatus();
   return (
-    <form action={formAction} className="space-y-3">
-      <FormError message={state.error} />
-      <button type="submit" disabled={pending} className={`${goldButton} w-full`}>
-        {pending ? "Opening checkout…" : `Continue to payment, ${priceLabel}/month`}
-      </button>
+    <button type="submit" disabled={pending} className={`btn-vip ${className}`}>
+      {pending ? "Opening checkout…" : children}
+    </button>
+  );
+}
+
+/**
+ * Every "Get VIP" button on the site. One click takes the visitor to
+ * Stripe's checkout; they create their account after paying.
+ */
+export function GetVipButton({ children = "Get VIP", className = "h-12 px-7", formClassName = "" }) {
+  return (
+    <form action={startCheckoutAction} className={formClassName}>
+      <CheckoutSubmit className={className}>{children}</CheckoutSubmit>
     </form>
   );
 }
 
-export function SignupForm({ priceLabel }) {
-  const [state, formAction, pending] = useActionState(signupAndCheckoutAction, { error: null, username: "" });
+/** Shown after a successful payment: the buyer picks their login. */
+export function ClaimForm({ sessionId, email = "" }) {
+  const [state, formAction, pending] = useActionState(claimAccountAction, { error: null, email });
   return (
-    <form action={formAction} className="space-y-4">
-      <p className="text-sm text-muted">Pick a username and password. You’ll use them to log in and watch.</p>
-      <Field label="Username" hint="Lowercase letters, numbers, dots and underscores.">
+    <form action={formAction} className="space-y-4 text-left">
+      <input type="hidden" name="sessionId" value={sessionId} />
+      <Field label="Email" hint="You’ll log in with this.">
         <input
-          name="username"
+          name="email"
+          type="email"
           required
-          minLength={3}
-          maxLength={32}
-          pattern="[a-z0-9_.]+"
-          autoComplete="username"
-          autoCapitalize="none"
-          spellCheck={false}
-          defaultValue={state.username}
+          autoComplete="email"
+          defaultValue={state.email}
           className={inputClass}
         />
       </Field>
@@ -40,15 +46,9 @@ export function SignupForm({ priceLabel }) {
         <input name="password" type="password" required minLength={8} autoComplete="new-password" className={inputClass} />
       </Field>
       <FormError message={state.error} />
-      <button type="submit" disabled={pending} className={`${goldButton} w-full`}>
-        {pending ? "Opening checkout…" : `Create account and pay ${priceLabel}/month`}
+      <button type="submit" disabled={pending} className="btn-vip h-12 w-full px-6">
+        {pending ? "Creating your account…" : "Create account and start watching"}
       </button>
-      <p className="text-center text-sm text-muted">
-        Already have an account?{" "}
-        <Link href="/login?next=/vip" className="font-semibold text-fg underline-offset-4 hover:underline">
-          Log in
-        </Link>
-      </p>
     </form>
   );
 }

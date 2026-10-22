@@ -2,19 +2,41 @@
 
 CREATE TABLE IF NOT EXISTS users (
   id            BIGSERIAL PRIMARY KEY,
-  username      TEXT NOT NULL UNIQUE,
+  -- Admin-made accounts log in with a username; people who buy VIP log in
+  -- with their email. Every account has at least one of the two.
+  username      TEXT UNIQUE,
+  email         TEXT,
   password_hash TEXT NOT NULL,
   role          TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
-  -- A member is VIP while vip_until is in the future, or forever when an
-  -- admin grants VIP with no end date (vip_lifetime).
+  -- A member is VIP forever when vip_lifetime is true (everyone who buys
+  -- VIP, reviewed by hand each month), or until vip_until for members an
+  -- admin added with an end date.
   vip_until     TIMESTAMPTZ,
   vip_lifetime  BOOLEAN NOT NULL DEFAULT false,
-  -- Filled in when someone buys VIP through Stripe.
+  -- Filled in when someone buys VIP through Stripe. Shown in the admin
+  -- panel for the monthly review; it never switches VIP off by itself.
   stripe_customer_id     TEXT UNIQUE,
   stripe_subscription_id TEXT,
   stripe_status          TEXT,
   cancel_at_period_end   BOOLEAN NOT NULL DEFAULT false,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (username IS NOT NULL OR email IS NOT NULL)
+);
+-- For databases created before email logins existed.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (lower(email));
+
+-- Paid Stripe checkouts, so a buyer's account can be created after paying
+-- (and the admin can see anyone who paid but hasn't set up their login).
+CREATE TABLE IF NOT EXISTS vip_checkouts (
+  session_id      TEXT PRIMARY KEY,
+  customer_id     TEXT,
+  subscription_id TEXT,
+  email           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  claimed_by      BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  claimed_at      TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

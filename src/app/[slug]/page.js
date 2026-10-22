@@ -33,8 +33,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CreatorPage({ params }) {
+export default async function CreatorPage({ params, searchParams }) {
   const { slug } = await params;
+  const { tab } = await searchParams;
   // /JadeGamer -> /jadegamer, so every creator has exactly one address.
   const lower = String(slug).toLowerCase();
   if (lower !== slug && SLUG_PATTERN.test(lower)) permanentRedirect(`/${lower}`);
@@ -61,6 +62,7 @@ export default async function CreatorPage({ params }) {
       canManage={Boolean(viewer?.isAdmin)}
       trackView={!viewer?.isAdmin}
       priceLabel={VIP_PRICE_LABEL}
+      initialTab={tab === "photos" ? "photos" : "videos"}
     />
   );
 }

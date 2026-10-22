@@ -1,7 +1,7 @@
 // Stripe calls this when someone pays, renews, cancels or a payment fails.
 // Add the endpoint https://YOUR-SITE/api/stripe/webhook in the Stripe
 // dashboard and put its signing secret in STRIPE_WEBHOOK_SECRET.
-import { stripe, stripeConfigured, syncCheckoutSession, syncSubscription } from "@/lib/stripe";
+import { handleCheckout, stripe, stripeConfigured, syncSubscription } from "@/lib/stripe";
 
 export async function POST(request) {
   if (!stripeConfigured() || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -19,9 +19,14 @@ export async function POST(request) {
 
   try {
     switch (event.type) {
+      // A payment went through. Saved so the buyer can create their login
+      // (or VIP is added right away if they were already logged in).
       case "checkout.session.completed":
-        await syncCheckoutSession(event.data.object);
+      case "checkout.session.async_payment_succeeded":
+        await handleCheckout(event.data.object);
         break;
+      // Renewals, cancellations, failed payments: shown in the admin panel
+      // for your monthly review. They never remove VIP on their own.
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted":

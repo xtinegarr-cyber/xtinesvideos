@@ -10,7 +10,7 @@ export default function LoginForm({ next = "" }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next} />
-      <Field label="Username">
+      <Field label="Email or username">
         <input
           name="username"
           required

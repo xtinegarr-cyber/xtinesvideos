@@ -20,8 +20,11 @@ memberships are sold with Stripe for $4.99/month.
 
 **Creator pages** (`/creator_name`, e.g. a creator named "gamercool 123" is at
 `/gamercool_123`)
-- Videos and photos in a grid. Visitors without VIP who open a VIP
-  creator see only the creator's name and a "Get VIP" prompt, not the uploads.
+- Separate **Videos** and **Photos** tabs, with Videos open by default
+  (`/creator_name?tab=photos` opens Photos). Phone videos show upright.
+- VIP cards on the homepage lead visitors without VIP to Get VIP instead of
+  the profile. If they type a VIP creator's link, they see only the
+  creator's name and a "Get VIP" prompt, not the uploads.
 - Page titles read "gamercool 123 - Videos | XTINE’S VIDEOS" for search engines.
 - Each profile visit counts as a view, once per visitor per creator per day.
   Refreshing doesn't add views. Bots and admins aren't counted.
@@ -35,14 +38,22 @@ memberships are sold with Stripe for $4.99/month.
   them between free and VIP, change their picture, or delete them. Each
   creator shows total views and views this week.
 - VIP members (at the bottom): add members yourself, with or without an
-  end date. People who buy VIP appear here automatically. Removing a Stripe
-  member also cancels their subscription.
+  end date. Buyers appear here automatically with their payment status.
+  Anyone whose payment stopped (canceled or failing) but who still has VIP
+  is marked **Review** and listed first. Removing a member deletes their
+  account and cancels their Stripe subscription if it's still running.
+- "Paid, but haven't created their login yet": anyone who paid and closed
+  the page before making an account, with a link you can send them.
 
 **VIP**
-- `/vip`: new visitors pick a username and password, then pay on Stripe.
+- Every "Get VIP" button goes straight to Stripe's checkout ($4.99/month).
+- After paying, buyers create their login with their **email and a
+  password**. That account has VIP with no end date.
+- VIP never switches off by itself. Cancellations and failed payments show
+  up in the admin panel for your monthly review, and you remove VIP by hand.
+- Members log in with their email; admin-made accounts use a username.
 - `/account`: members see their status. "Manage or cancel VIP" opens
   Stripe's page for changing their card or canceling.
-- A member who cancels keeps VIP until the end of the month they paid for.
 
 ### How uploads become fast-loading videos
 
@@ -97,6 +108,7 @@ the layout, then delete them from the admin panel.
 3. Under Developers → Webhooks, add the endpoint
    `https://YOUR-DOMAIN/api/stripe/webhook` with these events:
    - `checkout.session.completed`
+   - `checkout.session.async_payment_succeeded`
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`

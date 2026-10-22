@@ -11,7 +11,10 @@ export default function CreatorCard({ creator }) {
   const vip = creator.tier === "vip";
   return (
     <Link
-      href={`/${creator.slug}`}
+      // Visitors without VIP can't open VIP profiles from here; the card
+      // takes them to Get VIP instead.
+      href={creator.locked ? "/vip" : `/${creator.slug}`}
+      aria-label={creator.locked ? `${creator.name}, VIP only. Get VIP to unlock` : undefined}
       className={`group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-panel ring-1 transition-[box-shadow] ${
         vip ? "ring-gold/35 hover:ring-gold/80" : "ring-line hover:ring-muted"
       }`}

@@ -51,6 +51,17 @@ export function validateUsername(username) {
   return null;
 }
 
+export function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+export function validateEmail(email) {
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "Enter a valid email address.";
+  }
+  return null;
+}
+
 export function validatePassword(password) {
   if (String(password).length < 8) return "Passwords need at least 8 characters.";
   if (String(password).length > 200) return "Passwords can be at most 200 characters.";

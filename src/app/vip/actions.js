@@ -2,59 +2,53 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createUser } from "@/lib/members";
-import { validatePassword, validateUsername } from "@/lib/passwords";
+import { normalizeEmail, validateEmail, validatePassword } from "@/lib/passwords";
 import { allow } from "@/lib/rate-limit";
 import { getViewer, siteUrl, startSession } from "@/lib/session";
-import { createBillingPortal, createVipCheckout, stripeConfigured } from "@/lib/stripe";
+import { claimCheckout, createBillingPortal, createVipCheckout, stripeConfigured } from "@/lib/stripe";
 import { clientIp } from "@/lib/visitors";
-import { toViewer } from "@/lib/vip";
 
-const NOT_SET_UP = "VIP checkout isn't set up yet. The site owner needs to add the Stripe keys.";
-
-/** Logged-in member without VIP -> Stripe checkout. */
-export async function startCheckoutAction(_prev) {
+/** Every "Get VIP" button: straight to Stripe's checkout page. */
+export async function startCheckoutAction() {
   const viewer = await getViewer();
-  if (!viewer) redirect("/vip");
-  if (viewer.isVip) redirect("/account");
-  if (!stripeConfigured()) return { error: NOT_SET_UP };
+  if (viewer?.isVip) redirect(viewer.isAdmin ? "/admin" : "/account");
+  if (!stripeConfigured()) redirect("/vip?error=setup");
 
   let url;
   try {
     url = await createVipCheckout(viewer, await siteUrl());
   } catch (err) {
     console.error("Stripe checkout failed:", err);
-    return { error: "Checkout couldn't open. Try again in a moment." };
+    redirect("/vip?error=checkout");
   }
   redirect(url);
 }
 
-/** New visitor: create an account, log them in, then go to Stripe. */
-export async function signupAndCheckoutAction(_prev, formData) {
-  const username = String(formData.get("username") || "").trim().toLowerCase();
+/** After paying: create the login (email + password) that has VIP. */
+export async function claimAccountAction(_prev, formData) {
+  const sessionId = String(formData.get("sessionId") || "");
+  const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") || "");
-  if (!stripeConfigured()) return { error: NOT_SET_UP, username };
 
-  const invalid = validateUsername(username) || validatePassword(password);
-  if (invalid) return { error: invalid, username };
+  const invalid = validateEmail(email) || validatePassword(password);
+  if (invalid) return { error: invalid, email };
 
   const ip = clientIp(await headers());
-  if (!allow(`signup:${ip}`, 5, 60 * 60 * 1000)) {
-    return { error: "Too many new accounts from this connection. Try again in an hour.", username };
+  if (!allow(`claim:${ip}`, 10)) {
+    return { error: "Too many tries. Wait 10 minutes and try again.", email };
   }
 
-  const user = await createUser({ username, password });
-  if (!user) return { error: "That username is taken. Try another one.", username };
-  await startSession(user.id);
-
-  let url;
+  let result;
   try {
-    url = await createVipCheckout(toViewer(user), await siteUrl());
+    result = await claimCheckout({ sessionId, email, password });
   } catch (err) {
-    console.error("Stripe checkout failed:", err);
-    return { error: "Your account is ready, but checkout couldn't open. Press the button again.", username };
+    console.error("Creating a VIP account failed:", err);
+    return { error: "Something went wrong creating your account. Try again in a minute.", email };
   }
-  redirect(url);
+  if (result.error) return { error: result.error, email };
+
+  await startSession(result.user.id);
+  redirect(`/vip/success?session_id=${encodeURIComponent(sessionId)}`);
 }
 
 /** Stripe's page for changing the card or canceling VIP. */

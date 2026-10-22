@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { FiLock } from "react-icons/fi";
 import CreatorImage from "./CreatorImage";
+import { GetVipButton } from "./VipForms";
 
 const TILT = [-9, 0, 9];
 
@@ -60,9 +60,7 @@ export default function VipBanner({ priceLabel, previews = [] }) {
           </h2>
           <p className="mt-1 text-sm text-muted">Every VIP profile, video and photo. Cancel anytime.</p>
         </div>
-        <Link href="/vip" className="btn-vip col-span-2 h-12 w-full px-7 sm:ml-auto sm:w-auto sm:shrink-0">
-          Get VIP
-        </Link>
+        <GetVipButton formClassName="col-span-2 sm:ml-auto sm:shrink-0" className="h-12 w-full px-7 sm:w-auto" />
       </div>
     </section>
   );

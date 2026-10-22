@@ -1,59 +1,113 @@
+// Stripe sends buyers here after paying. New buyers create their login
+// (email + password) here; it comes with VIP that doesn't expire.
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import { ClaimForm } from "@/components/VipForms";
 import { getViewer } from "@/lib/session";
 import { SITE_NAME } from "@/lib/site";
-import { stripe, stripeConfigured, syncCheckoutSession } from "@/lib/stripe";
+import { confirmCheckout, stripeConfigured } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: `Welcome to VIP – ${SITE_NAME}` };
+export const metadata = { title: `Welcome to VIP – ${SITE_NAME}`, robots: { index: false } };
+
+function Message({ title, children, action }) {
+  return (
+    <div className="text-center">
+      <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">{title}</h1>
+      <p className="mt-4 text-lg text-muted">{children}</p>
+      {action && <div className="mt-8 flex justify-center">{action}</div>}
+    </div>
+  );
+}
+
+const browseButton = (
+  <Link href="/" className="btn-vip h-12 px-7">
+    Browse creators
+  </Link>
+);
 
 export default async function VipSuccessPage({ searchParams }) {
-  const params = await searchParams;
-  const sessionId = typeof params?.session_id === "string" ? params.session_id : "";
-  let viewer = await getViewer();
+  const { session_id: sessionId = "" } = await searchParams;
+  const viewer = await getViewer();
+  const here = `/vip/success?session_id=${encodeURIComponent(sessionId)}`;
 
-  // Turn VIP on right away instead of waiting for Stripe's webhook.
-  if (viewer && !viewer.isVip && /^cs_[A-Za-z0-9_]+$/.test(sessionId) && stripeConfigured()) {
+  let confirmed = null;
+  let lookupFailed = false;
+  if (sessionId && stripeConfigured()) {
     try {
-      const session = await stripe().checkout.sessions.retrieve(sessionId);
-      if (session.client_reference_id === String(viewer.id) && session.status === "complete") {
-        await syncCheckoutSession(session);
-        viewer = { ...viewer, isVip: true };
-      }
+      confirmed = await confirmCheckout(sessionId);
     } catch (err) {
-      console.error("Could not confirm checkout session:", err);
+      console.error("Could not confirm checkout:", err);
+      lookupFailed = true;
     }
+  }
+  const checkout = confirmed?.checkout;
+  const claimedByViewer = checkout?.claimed_by && viewer && Number(checkout.claimed_by) === viewer.id;
+
+  let content;
+  if (claimedByViewer || (viewer?.isVip && !checkout)) {
+    content = (
+      <Message title="You’re VIP" action={browseButton}>
+        Every VIP creator is unlocked for you now.
+      </Message>
+    );
+  } else if (lookupFailed) {
+    content = (
+      <Message
+        title="Almost there"
+        action={
+          <Link href={here} className="btn-vip h-12 px-7">
+            Try again
+          </Link>
+        }
+      >
+        We couldn’t check your payment with Stripe just now. Your payment is safe; try again in a minute.
+      </Message>
+    );
+  } else if (!checkout) {
+    content = (
+      <Message
+        title="Payment not finished"
+        action={
+          <Link href="/vip" className="btn-vip h-12 px-7">
+            Back to VIP
+          </Link>
+        }
+      >
+        We couldn’t find a completed payment for this link. If you were charged, contact us on Discord or Telegram.
+      </Message>
+    );
+  } else if (checkout.claimed_at) {
+    content = (
+      <Message
+        title="Your account is ready"
+        action={
+          <Link href="/login?next=/" className="btn-vip h-12 px-7">
+            Log in
+          </Link>
+        }
+      >
+        An account was already created with this payment. Log in with your email and password.
+      </Message>
+    );
+  } else {
+    content = (
+      <div>
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Payment complete</h1>
+          <p className="mt-4 text-lg text-muted">Create your login to start watching. Your account comes with VIP.</p>
+        </div>
+        <div className="mx-auto mt-8 max-w-sm rounded-3xl border border-gold/25 bg-panel/80 p-6">
+          <ClaimForm sessionId={sessionId} email={checkout.email ?? ""} />
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       <SiteHeader viewer={viewer} />
-      <main className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
-        {viewer?.isVip ? (
-          <>
-            <h1 className="text-5xl font-extrabold tracking-tight">You’re VIP</h1>
-            <p className="mt-4 text-lg text-muted">Every VIP creator is unlocked for you now.</p>
-            <Link href="/" className="btn-vip mt-8 h-12 px-7">
-              Browse creators
-            </Link>
-          </>
-        ) : (
-          <>
-            <h1 className="text-4xl font-extrabold tracking-tight">Payment received</h1>
-            <p className="mt-4 text-muted">
-              {viewer
-                ? "VIP usually switches on within a minute. Refresh this page if it hasn’t yet."
-                : "Log in with the account you just created to start watching."}
-            </p>
-            <Link
-              href={viewer ? `/vip/success?session_id=${encodeURIComponent(sessionId)}` : "/login"}
-              className="mt-8 inline-flex h-12 items-center rounded-full bg-fg px-7 font-bold text-ink"
-            >
-              {viewer ? "Refresh" : "Log in"}
-            </Link>
-          </>
-        )}
-      </main>
+      <main className="mx-auto max-w-lg px-4 pb-24 pt-14">{content}</main>
     </>
   );
 }

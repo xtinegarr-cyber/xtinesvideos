@@ -3,6 +3,7 @@ import { FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import CreatorCard from "./CreatorCard";
 import VipBanner from "./VipBanner";
+import { GetVipButton } from "./VipForms";
 
 function Grid({ creators }) {
   return (
@@ -86,9 +87,7 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
                 count={vip.length}
                 action={
                   showVipPitch && (
-                    <Link href="/vip" className="btn-vip h-10 px-5 text-sm">
-                      Get VIP for {priceLabel}/month
-                    </Link>
+                    <GetVipButton className="h-10 px-5 text-sm">Get VIP for {priceLabel}/month</GetVipButton>
                   )
                 }
               >

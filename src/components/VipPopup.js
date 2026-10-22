@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FiLock, FiX } from "react-icons/fi";
+import { GetVipButton } from "./VipForms";
 
 const DELAY_MS = 60_000;
 const STARTED_KEY = "xv_visit_started";
@@ -94,13 +94,9 @@ export default function VipPopup({ priceLabel }) {
           <span className="font-semibold text-fg">{priceLabel} a month</span>. Cancel anytime.
         </p>
         <div className="mt-7 flex flex-col gap-2 sm:flex-row-reverse">
-          <Link
-            href="/vip"
-            onClick={() => setOpen(false)}
-            className="btn-vip h-12 flex-1 px-6"
-          >
+          <GetVipButton formClassName="flex-1" className="h-12 w-full px-6">
             Get VIP for {priceLabel}/month
-          </Link>
+          </GetVipButton>
           <button
             type="button"
             onClick={() => setOpen(false)}

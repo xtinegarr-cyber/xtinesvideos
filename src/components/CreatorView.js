@@ -4,6 +4,7 @@ import SiteHeader from "./SiteHeader";
 import CreatorImage from "./CreatorImage";
 import MediaGrid from "./MediaGrid";
 import ViewTracker from "./ViewTracker";
+import { GetVipButton } from "./VipForms";
 import { formatViews } from "@/lib/format";
 
 function plural(n, word) {
@@ -35,9 +36,9 @@ function VipGate({ creator, counts, viewer, priceLabel }) {
         <span className="font-semibold text-fg">{priceLabel} a month</span>, cancel anytime.
       </p>
       <div className="mt-8 flex flex-col items-center gap-3">
-        <Link href="/vip" className="btn-vip h-12 w-full max-w-xs px-7">
+        <GetVipButton formClassName="w-full max-w-xs" className="h-12 w-full px-7">
           Get VIP for {priceLabel}/month
-        </Link>
+        </GetVipButton>
         {!viewer && (
           <Link
             href={`/login?next=/${creator.slug}`}
@@ -51,7 +52,7 @@ function VipGate({ creator, counts, viewer, priceLabel }) {
   );
 }
 
-export default function CreatorView({ viewer, creator, items, counts, canManage, trackView, priceLabel }) {
+export default function CreatorView({ viewer, creator, items, counts, canManage, trackView, priceLabel, initialTab }) {
   const vip = creator.tier === "vip";
   const { videos, photos } = counts;
 
@@ -105,7 +106,7 @@ export default function CreatorView({ viewer, creator, items, counts, canManage,
           <VipGate creator={creator} counts={counts} viewer={viewer} priceLabel={priceLabel} />
         ) : (
           <div className="mt-8">
-            <MediaGrid items={items} canManage={canManage} />
+            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} />
           </div>
         )}
       </main>

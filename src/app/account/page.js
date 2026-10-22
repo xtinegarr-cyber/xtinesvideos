@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import { quietButton } from "@/components/forms";
+import { GetVipButton } from "@/components/VipForms";
 import { manageSubscriptionAction } from "@/app/vip/actions";
 import { logout } from "@/app/actions";
 import { formatDate } from "@/lib/format";
@@ -12,14 +12,27 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: `Your account – ${SITE_NAME}` };
 
 function vipStatus(viewer) {
-  if (viewer.vipLifetime) return "VIP, with no end date.";
-  if (viewer.isVip && viewer.cancelAtPeriodEnd) {
-    return `VIP until ${formatDate(viewer.vipUntil)}. Your subscription is canceled and won’t renew.`;
+  if (viewer.isVip && viewer.vipLifetime) return "VIP";
+  if (viewer.isVip) return `VIP until ${formatDate(viewer.vipUntil)}`;
+  return "No VIP";
+}
+
+function subscriptionStatus(viewer) {
+  if (!viewer.hasStripe) return null;
+  if (viewer.cancelAtPeriodEnd) return "Canceled. You won’t be charged again.";
+  switch (viewer.stripeStatus) {
+    case "active":
+    case "trialing":
+      return "Active, renews monthly.";
+    case "past_due":
+    case "unpaid":
+      return "Your last payment didn’t go through. Update your card to keep VIP.";
+    case "canceled":
+    case "incomplete_expired":
+      return "Canceled. You won’t be charged again.";
+    default:
+      return null;
   }
-  if (viewer.isVip && viewer.hasStripe) return `VIP. Renews around ${formatDate(viewer.vipUntil)}.`;
-  if (viewer.isVip) return `VIP until ${formatDate(viewer.vipUntil)}.`;
-  if (viewer.vipUntil) return `Your VIP ended on ${formatDate(viewer.vipUntil)}.`;
-  return "You don’t have VIP yet.";
 }
 
 export default async function AccountPage() {
@@ -34,25 +47,24 @@ export default async function AccountPage() {
         <h1 className="text-4xl font-extrabold tracking-tight">Your account</h1>
         <div className="mt-8 space-y-6 rounded-3xl border border-line bg-panel p-6">
           <div>
-            <p className="text-sm text-muted">Username</p>
+            <p className="text-sm text-muted">{viewer.email ? "Email" : "Username"}</p>
             <p className="text-lg font-semibold">{viewer.username}</p>
           </div>
           <div>
             <p className="text-sm text-muted">Membership</p>
             <p className="text-lg font-semibold">{vipStatus(viewer)}</p>
+            {subscriptionStatus(viewer) && <p className="mt-1 text-sm text-muted">{subscriptionStatus(viewer)}</p>}
           </div>
           <div className="flex flex-wrap gap-2 border-t border-line pt-6">
             {viewer.hasStripe && (
               <form action={manageSubscriptionAction}>
                 <button type="submit" className={quietButton}>
-                  {viewer.isVip && !viewer.cancelAtPeriodEnd ? "Manage or cancel VIP" : "Billing and receipts"}
+                  {viewer.stripeStatus === "active" && !viewer.cancelAtPeriodEnd ? "Manage or cancel VIP" : "Billing and receipts"}
                 </button>
               </form>
             )}
             {!viewer.isVip && (
-              <Link href="/vip" className="btn-vip h-10 px-5 text-sm">
-                Get VIP
-              </Link>
+              <GetVipButton className="h-10 px-5 text-sm" />
             )}
             <form action={logout}>
               <button type="submit" className={quietButton}>

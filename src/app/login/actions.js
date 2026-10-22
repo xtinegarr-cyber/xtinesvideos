@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { findUserByUsername } from "@/lib/members";
+import { findUserByLogin } from "@/lib/members";
 import { hashPassword, verifyPassword } from "@/lib/passwords";
 import { allow } from "@/lib/rate-limit";
 import { startSession } from "@/lib/session";
@@ -14,7 +14,7 @@ import { safeNextPath } from "@/lib/vip";
 let decoyHash;
 
 export async function loginAction(_prev, formData) {
-  const username = String(formData.get("username") || "").trim().toLowerCase();
+  const username = String(formData.get("username") || "").trim().toLowerCase(); // email or username
   const password = String(formData.get("password") || "");
   const next = safeNextPath(formData.get("next"), "");
 
@@ -23,11 +23,11 @@ export async function loginAction(_prev, formData) {
     return { error: "Too many login attempts. Wait 10 minutes and try again.", username };
   }
 
-  const user = username ? await findUserByUsername(username) : null;
+  const user = username ? await findUserByLogin(username) : null;
   decoyHash ??= await hashPassword("decoy-password");
   const ok = await verifyPassword(password, user?.password_hash ?? decoyHash);
   if (!user || !ok) {
-    return { error: "That username and password don't match. Check them and try again.", username };
+    return { error: "That email or username and password don't match. Check them and try again.", username };
   }
 
   await startSession(user.id);

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { FiCheck, FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
-import { CheckoutButton, SignupForm } from "./VipForms";
-import { FormNotice } from "./forms";
+import { GetVipButton } from "./VipForms";
+import { FormError, FormNotice } from "./forms";
 
 const PERKS = [
   "Every VIP creator’s profile, videos and photos",
@@ -10,7 +10,12 @@ const PERKS = [
   "Cancel anytime from your account page",
 ];
 
-export default function VipView({ viewer, priceLabel, configured }) {
+const ERRORS = {
+  checkout: "Checkout couldn’t open. Try again in a moment.",
+  setup: "VIP checkout isn’t switched on yet. Check back soon.",
+};
+
+export default function VipView({ viewer, priceLabel, configured, error }) {
   return (
     <>
       <SiteHeader viewer={viewer} />
@@ -57,9 +62,32 @@ export default function VipView({ viewer, priceLabel, configured }) {
             </div>
           ) : (
             <div className="space-y-5">
-              <h2 className="text-2xl font-extrabold">{viewer ? `Get VIP, ${viewer.username}` : "Get VIP"}</h2>
-              {!configured && <FormNotice message="VIP checkout isn't switched on yet. Check back soon." />}
-              {viewer ? <CheckoutButton priceLabel={priceLabel} /> : <SignupForm priceLabel={priceLabel} />}
+              <h2 className="text-2xl font-extrabold">Get VIP</h2>
+              <ol className="space-y-2 text-sm text-muted">
+                <li>
+                  <span className="font-semibold text-fg">1.</span> Pay {priceLabel}/month securely on Stripe.
+                </li>
+                <li>
+                  <span className="font-semibold text-fg">2.</span>{" "}
+                  {viewer
+                    ? `VIP is added to your account (${viewer.username}).`
+                    : "Create your login with your email and a password."}
+                </li>
+                <li>
+                  <span className="font-semibold text-fg">3.</span> Every VIP creator unlocks right away.
+                </li>
+              </ol>
+              {!configured && <FormNotice message={ERRORS.setup} />}
+              {configured && <FormError message={ERRORS[error]} />}
+              <GetVipButton className="h-12 w-full px-6">Get VIP for {priceLabel}/month</GetVipButton>
+              {!viewer && (
+                <p className="text-center text-sm text-muted">
+                  Already VIP?{" "}
+                  <Link href="/login?next=/" className="font-semibold text-fg underline-offset-4 hover:underline">
+                    Log in
+                  </Link>
+                </p>
+              )}
             </div>
           )}
         </section>

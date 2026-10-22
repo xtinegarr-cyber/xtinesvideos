@@ -6,6 +6,7 @@ import UploadPanel from "./UploadPanel";
 import { ChangePhotoButton, CreateCreatorForm } from "./CreatorForms";
 import MemberForm from "./MemberForm";
 import ConfirmButton from "./ConfirmButton";
+import CopyLink from "./CopyLink";
 import { deleteCreatorAction, deleteMemberAction, setTierAction } from "@/app/admin/actions";
 import { formatDate, formatViews } from "@/lib/format";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
@@ -101,29 +102,51 @@ function CreatorRow({ creator, storageReady }) {
   );
 }
 
-function memberStatus(m) {
-  if (m.lifetime) return { label: "Active, no end date", tone: "text-[#9be4b8]" };
-  if (m.active && m.cancelAtPeriodEnd) return { label: `Canceled, VIP until ${formatDate(m.vipUntil)}`, tone: "text-gold" };
-  if (m.active) return { label: `Active until ${formatDate(m.vipUntil)}`, tone: "text-[#9be4b8]" };
-  return { label: m.vipUntil ? `Ended ${formatDate(m.vipUntil)}` : "Never paid", tone: "text-muted" };
+const STOPPED = new Set(["canceled", "unpaid", "incomplete_expired", "past_due", "incomplete"]);
+
+/** Paying members whose payments stopped but who still have VIP. */
+function needsReview(m) {
+  return m.active && m.viaStripe && (STOPPED.has(m.stripeStatus) || m.cancelAtPeriodEnd);
+}
+
+function vipLabel(m) {
+  if (m.lifetime) return { label: "Has VIP", tone: "text-[#9be4b8]" };
+  if (m.active) return { label: `Until ${formatDate(m.vipUntil)}`, tone: "text-[#9be4b8]" };
+  return { label: m.vipUntil ? `Ended ${formatDate(m.vipUntil)}` : "No VIP", tone: "text-muted" };
+}
+
+function paymentLabel(m) {
+  if (!m.viaStripe) return "Added by admin";
+  if (m.stripeStatus === "past_due" || m.stripeStatus === "unpaid") return "Payment failing";
+  if (m.stripeStatus === "canceled" || m.stripeStatus === "incomplete_expired") return "Subscription canceled";
+  if (m.cancelAtPeriodEnd) return "Canceled, ends this month";
+  if (m.stripeStatus === "active" || m.stripeStatus === "trialing") return `Paying ${VIP_PRICE_LABEL}/month`;
+  return m.stripeStatus || "Stripe";
 }
 
 function MemberRow({ member }) {
-  const status = memberStatus(member);
+  const vip = vipLabel(member);
+  const review = needsReview(member);
+  const subscriptionLive = member.viaStripe && !STOPPED.has(member.stripeStatus) && !member.cancelAtPeriodEnd;
   return (
-    <tr className="border-t border-line">
-      <td className="py-3 pr-4 font-semibold">{member.username}</td>
-      <td className={`py-3 pr-4 ${status.tone}`}>{status.label}</td>
-      <td className="py-3 pr-4 text-muted">{member.viaStripe ? `Stripe, ${VIP_PRICE_LABEL}/month` : "Added by admin"}</td>
+    <tr className={`border-t border-line ${review ? "bg-gold/[0.06]" : ""}`}>
+      <td className="max-w-[16rem] truncate py-3 pl-2 pr-4 font-semibold">{member.login}</td>
+      <td className={`py-3 pr-4 ${vip.tone}`}>{vip.label}</td>
+      <td className="py-3 pr-4">
+        <span className={review ? "font-semibold text-gold" : "text-muted"}>{paymentLabel(member)}</span>
+        {review && (
+          <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold">Review</span>
+        )}
+      </td>
       <td className="py-3 pr-4 text-muted">{formatDate(member.createdAt)}</td>
-      <td className="py-3 text-right">
+      <td className="py-3 pr-2 text-right">
         <form action={deleteMemberAction}>
           <input type="hidden" name="userId" value={member.id} />
           <ConfirmButton
             message={
-              member.viaStripe && member.active && !member.cancelAtPeriodEnd
-                ? `Remove ${member.username}? Their Stripe subscription will be canceled now.`
-                : `Remove ${member.username}? They won't be able to log in anymore.`
+              subscriptionLive
+                ? `Remove ${member.login}? Their account is deleted and their Stripe subscription is canceled now.`
+                : `Remove ${member.login}? Their account is deleted and they lose VIP.`
             }
             pendingLabel="Removing…"
             className="text-sm font-semibold text-muted hover:text-rose"
@@ -136,9 +159,33 @@ function MemberRow({ member }) {
   );
 }
 
-export default function AdminView({ viewer, stats, creators, members, storageReady, stripeReady }) {
+function PendingCheckouts({ checkouts }) {
+  if (!checkouts.length) return null;
+  return (
+    <div className="mt-8 rounded-2xl border border-gold/25 bg-gold/[0.05] p-4">
+      <h3 className="font-bold">Paid, but haven’t created their login yet</h3>
+      <p className="mt-1 text-sm text-muted">
+        If someone closed the page after paying, send them their link. It lets them create their account once.
+      </p>
+      <ul className="mt-4 space-y-3">
+        {checkouts.map((c) => (
+          <li key={c.sessionId} className="grid gap-2 text-sm sm:grid-cols-[minmax(0,14rem)_7rem_1fr] sm:items-center">
+            <span className="truncate font-semibold">{c.email || "No email"}</span>
+            <span className="text-muted">Paid {formatDate(c.createdAt)}</span>
+            <CopyLink url={c.setupUrl} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function AdminView({ viewer, stats, creators, members, pendingCheckouts = [], storageReady, stripeReady }) {
   const uploadCreators = creators.map(({ id, name, tier }) => ({ id, name, tier }));
   const activeMembers = members.filter((m) => m.active).length;
+  const toReview = members.filter(needsReview).length;
+  // People to review first, then everyone else newest first.
+  const sortedMembers = [...members].sort((a, b) => Number(needsReview(b)) - Number(needsReview(a)));
 
   return (
     <>
@@ -189,7 +236,7 @@ export default function AdminView({ viewer, stats, creators, members, storageRea
         <Section
           id="members-heading"
           title="VIP members"
-          description={`${activeMembers} active. People who buy VIP appear here automatically. You can also add members yourself, for free or with an end date.`}
+          description={`${activeMembers} with VIP${toReview ? `, ${toReview} to review (their payment stopped but they still have VIP)` : ""}. Buyers appear here automatically and keep VIP until you remove them. You can also add members yourself, with or without an end date.`}
         >
           <MemberForm />
           <div className="mt-8 overflow-x-auto">
@@ -197,15 +244,15 @@ export default function AdminView({ viewer, stats, creators, members, storageRea
               <table className="w-full min-w-[40rem] text-left text-sm">
                 <thead className="text-muted">
                   <tr>
-                    <th className="pb-2 pr-4 font-semibold">Username</th>
+                    <th className="pb-2 pl-2 pr-4 font-semibold">Email or username</th>
                     <th className="pb-2 pr-4 font-semibold">VIP</th>
-                    <th className="pb-2 pr-4 font-semibold">How they joined</th>
+                    <th className="pb-2 pr-4 font-semibold">Payment</th>
                     <th className="pb-2 pr-4 font-semibold">Joined</th>
                     <th className="pb-2" />
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((m) => (
+                  {sortedMembers.map((m) => (
                     <MemberRow key={m.id} member={m} />
                   ))}
                 </tbody>
@@ -214,6 +261,7 @@ export default function AdminView({ viewer, stats, creators, members, storageRea
               <p className="py-2 text-muted">No VIP members yet.</p>
             )}
           </div>
+          <PendingCheckouts checkouts={pendingCheckouts} />
         </Section>
       </main>
     </>
