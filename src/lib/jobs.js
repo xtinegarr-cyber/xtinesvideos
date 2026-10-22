@@ -6,7 +6,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getCreatorById, insertMedia } from "./creators";
 import { detectKind, MediaError, processImage, processVideo } from "./media-processing";
-import { uploadFile } from "./storage";
+import { StorageError, uploadFile } from "./storage";
 import { readUpload, saveUpload, uploadDir, uploadFilePath } from "./uploads";
 
 const queue = globalThis.__xvJobs ?? (globalThis.__xvJobs = { running: 0, waiting: [], active: new Set() });
@@ -87,7 +87,7 @@ async function processUpload(id) {
   } catch (err) {
     console.error(`Processing upload ${id} (${meta.fileName}) failed:`, err.detail || err);
     meta.status = "failed";
-    meta.error = err instanceof MediaError ? err.message : "Processing failed. The server log has details.";
+    meta.error = err instanceof MediaError || err instanceof StorageError ? err.message : "Processing failed. The server log has details.";
   } finally {
     // Keep only the small status file; the video itself is now on R2.
     await fs.rm(input, { force: true });
