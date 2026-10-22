@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
-import { goldButton, quietButton } from "@/components/forms";
+import { quietButton } from "@/components/forms";
 import { manageSubscriptionAction } from "@/app/vip/actions";
 import { logout } from "@/app/actions";
 import { formatDate } from "@/lib/format";
@@ -50,7 +50,7 @@ export default async function AccountPage() {
               </form>
             )}
             {!viewer.isVip && (
-              <Link href="/vip" className={`${goldButton} h-10 px-5 text-sm`}>
+              <Link href="/vip" className="btn-vip h-10 px-5 text-sm">
                 Get VIP
               </Link>
             )}

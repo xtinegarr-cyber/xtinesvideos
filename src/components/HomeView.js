@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import CreatorCard from "./CreatorCard";
+import VipBanner from "./VipBanner";
 
 function Grid({ creators }) {
   return (
@@ -12,25 +13,6 @@ function Grid({ creators }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function VipStrip({ priceLabel }) {
-  return (
-    <div className="border-b border-gold/25 bg-gold/[0.07]">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
-        <p className="text-sm text-fg/90">
-          <span className="font-bold text-gold">VIP</span> unlocks every creator for {priceLabel} a month. Cancel
-          anytime.
-        </p>
-        <Link
-          href="/vip"
-          className="inline-flex h-9 items-center rounded-full bg-gold px-5 text-sm font-bold text-ink transition-colors hover:bg-[#f2d49a]"
-        >
-          Get VIP
-        </Link>
-      </div>
-    </div>
   );
 }
 
@@ -63,9 +45,14 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
   return (
     <>
       <SiteHeader viewer={viewer} search={search} />
-      {showVipPitch && <VipStrip priceLabel={priceLabel} />}
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
+        {showVipPitch && !searching && (
+          <div className="mb-10">
+            <VipBanner priceLabel={priceLabel} previews={vip} />
+          </div>
+        )}
+
         {searching && (
           <p className="mb-6 text-sm text-muted">
             {noResults ? "No creators match" : "Showing creators matching"}{" "}
@@ -89,8 +76,12 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
 
             <section
               aria-labelledby="vip-heading"
-              className="relative mt-16 rounded-3xl border border-gold/25 bg-panel/60 px-4 pb-6 pt-7 sm:px-6"
+              className="relative mt-16 overflow-hidden rounded-3xl border border-gold/20 bg-[linear-gradient(180deg,rgba(231,203,152,0.07),rgba(14,19,37,0.55)_160px)] px-4 pb-6 pt-7 sm:px-6"
             >
+              <span
+                aria-hidden
+                className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent"
+              />
               <SectionHeading
                 title={
                   <span id="vip-heading" className="inline-flex items-center gap-2.5">
@@ -109,7 +100,7 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
               {showVipPitch && (
                 <Link
                   href="/vip"
-                  className="absolute right-4 top-7 hidden h-10 items-center rounded-full bg-gold px-5 text-sm font-bold text-ink transition-colors hover:bg-[#f2d49a] sm:inline-flex sm:right-6"
+                  className="btn-vip absolute right-6 top-7 hidden h-10 px-5 text-sm sm:inline-flex"
                 >
                   Get VIP
                 </Link>

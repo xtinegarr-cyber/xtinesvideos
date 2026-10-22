@@ -34,8 +34,8 @@ export function FormNotice({ message }) {
 export const primaryButton =
   "inline-flex h-11 items-center justify-center rounded-full bg-fg px-6 text-sm font-bold text-ink transition-colors hover:bg-white disabled:cursor-wait disabled:opacity-60";
 
-export const goldButton =
-  "inline-flex h-12 items-center justify-center rounded-full bg-gold px-6 font-bold text-ink transition-colors hover:bg-[#f2d49a] disabled:cursor-wait disabled:opacity-60";
+// Styles live in globals.css (.btn-vip) so every VIP button matches.
+export const goldButton = "btn-vip h-12 px-6";
 
 export const quietButton =
   "inline-flex h-10 items-center justify-center rounded-full border border-line px-4 text-sm font-semibold text-fg hover:border-muted disabled:opacity-60";

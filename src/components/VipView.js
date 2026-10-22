@@ -39,13 +39,13 @@ export default function VipView({ viewer, priceLabel, configured }) {
           <p className="mt-8 text-sm text-muted">Payments are handled by Stripe. We never see your card details.</p>
         </section>
 
-        <section className="self-start rounded-3xl border border-gold/30 bg-panel p-6 sm:p-7">
+        <section className="self-start rounded-3xl border border-gold/25 bg-panel/80 p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] sm:p-7">
           {viewer?.isVip ? (
             <div className="space-y-4">
               <h2 className="text-2xl font-extrabold">You have VIP</h2>
               <p className="text-muted">Every VIP creator is unlocked for you.</p>
               <div className="flex gap-2">
-                <Link href="/" className="inline-flex h-11 items-center rounded-full bg-gold px-5 font-bold text-ink">
+                <Link href="/" className="btn-vip h-11 px-5">
                   Browse creators
                 </Link>
                 {!viewer.isAdmin && (

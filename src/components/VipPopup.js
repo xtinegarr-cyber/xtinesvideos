@@ -35,7 +35,7 @@ function writeSession(key, value) {
 export default function VipPopup({ priceLabel }) {
   const pathname = usePathname() || "/";
   const [open, setOpen] = useState(false);
-  const primaryRef = useRef(null);
+  const dialogRef = useRef(null);
   const quiet = QUIET_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   useEffect(() => {
@@ -55,7 +55,8 @@ export default function VipPopup({ priceLabel }) {
 
   useEffect(() => {
     if (!open) return;
-    primaryRef.current?.focus({ focusVisible: false });
+    // Move focus into the dialog for keyboard and screen reader users.
+    dialogRef.current?.focus();
     const onKey = (e) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -67,10 +68,12 @@ export default function VipPopup({ priceLabel }) {
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/70 p-4 backdrop-blur-sm sm:place-items-center">
       <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={() => setOpen(false)} />
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="vip-popup-title"
-        className="pop-in relative w-full max-w-md overflow-hidden rounded-3xl border border-gold/40 bg-panel p-7 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="pop-in relative w-full max-w-md overflow-hidden rounded-3xl outline-none border border-gold/40 bg-panel p-7 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <button
           type="button"
@@ -92,10 +95,9 @@ export default function VipPopup({ priceLabel }) {
         </p>
         <div className="mt-7 flex flex-col gap-2 sm:flex-row-reverse">
           <Link
-            ref={primaryRef}
             href="/vip"
             onClick={() => setOpen(false)}
-            className="inline-flex h-12 flex-1 items-center justify-center rounded-full bg-gold px-6 font-bold text-ink transition-colors hover:bg-[#f2d49a]"
+            className="btn-vip h-12 flex-1 px-6"
           >
             Get VIP for {priceLabel}/month
           </Link>

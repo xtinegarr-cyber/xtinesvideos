@@ -62,7 +62,7 @@ export default function CreatorView({ viewer, creator, items, canManage, trackVi
         </div>
 
         {creator.locked && (
-          <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-gold/25 bg-[linear-gradient(105deg,rgba(231,203,152,0.12),rgba(14,19,37,0.6)_55%)] p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-bold text-fg">{creator.name}’s videos and photos are for VIP members.</p>
               <p className="mt-1 text-sm text-muted">
@@ -80,7 +80,7 @@ export default function CreatorView({ viewer, creator, items, canManage, trackVi
               )}
               <Link
                 href="/vip"
-                className="inline-flex h-11 items-center rounded-full bg-gold px-5 text-sm font-bold text-ink hover:bg-[#f2d49a]"
+                className="btn-vip h-11 px-5 text-sm"
               >
                 Get VIP
               </Link>

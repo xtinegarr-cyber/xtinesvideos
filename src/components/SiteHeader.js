@@ -16,7 +16,7 @@ function SearchForm({ search, className = "" }) {
           defaultValue={search}
           placeholder="Search creators"
           autoComplete="off"
-          className="h-10 w-full rounded-full border border-line bg-panel pl-9 pr-4 text-sm text-fg placeholder:text-muted focus:border-gold/60 focus:outline-none"
+          className="h-10 w-full rounded-full border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-fg placeholder:text-muted focus:border-gold/60 focus:outline-none"
         />
       </label>
     </form>
@@ -31,7 +31,7 @@ function SocialLink({ href, label, children }) {
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="grid size-9 place-items-center rounded-full bg-raised text-lg text-fg/90 transition-colors hover:bg-line hover:text-fg sm:size-10"
+      className="grid size-9 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-fg/90 transition-colors hover:bg-white/10 hover:text-fg sm:size-10"
     >
       {children}
     </a>
@@ -75,7 +75,7 @@ function AccountControls({ viewer }) {
 
 export default function SiteHeader({ viewer, search = "" }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-ink/90 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-ink/55 backdrop-blur-xl">
       <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:gap-3 py-3 sm:px-6">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <SocialLink href={DISCORD_URL} label="Join our Discord">

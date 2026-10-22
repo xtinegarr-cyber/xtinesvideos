@@ -33,7 +33,7 @@ export default async function VipSuccessPage({ searchParams }) {
           <>
             <h1 className="text-5xl font-extrabold tracking-tight">You’re VIP</h1>
             <p className="mt-4 text-lg text-muted">Every VIP creator is unlocked for you now.</p>
-            <Link href="/" className="mt-8 inline-flex h-12 items-center rounded-full bg-gold px-7 font-bold text-ink">
+            <Link href="/" className="btn-vip mt-8 h-12 px-7">
               Browse creators
             </Link>
           </>

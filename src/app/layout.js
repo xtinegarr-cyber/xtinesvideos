@@ -1,6 +1,7 @@
 import { Bricolage_Grotesque } from "next/font/google";
 import { getViewer } from "@/lib/session";
 import VipPopup from "@/components/VipPopup";
+import SiteBackdrop from "@/components/SiteBackdrop";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
 import "./globals.css";
 
@@ -16,7 +17,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#170f1c",
+  themeColor: "#0d1328",
 };
 
 export default async function RootLayout({ children }) {
@@ -24,6 +25,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={brand.variable}>
       <body className="min-h-dvh">
+        <SiteBackdrop />
         {children}
         {!viewer?.isVip && <VipPopup priceLabel={VIP_PRICE_LABEL} />}
       </body>
