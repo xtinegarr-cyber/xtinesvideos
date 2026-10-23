@@ -116,3 +116,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS reddit_claims_post_idx ON reddit_claims (post_
 CREATE UNIQUE INDEX IF NOT EXISTS reddit_claims_url_idx ON reddit_claims (lower(post_url));
 CREATE INDEX IF NOT EXISTS reddit_claims_ref_idx ON reddit_claims (ref_code, created_at DESC);
 CREATE INDEX IF NOT EXISTS reddit_claims_author_idx ON reddit_claims (lower(reddit_author), created_at DESC);
+
+-- Small site settings, e.g. one-time jobs that have already run.
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

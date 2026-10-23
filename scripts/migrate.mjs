@@ -62,6 +62,33 @@ try {
   await client.query(schema);
   console.log("Database tables are ready.");
 
+  // Once: videos uploaded before titles existed get one from the file name
+  // they were uploaded with (the same rule new uploads use). Runs only once,
+  // so titles you remove later stay removed.
+  const titlesDone = await client.query("SELECT 1 FROM app_settings WHERE key = 'titles_from_file_names'");
+  if (!titlesDone.rows.length) {
+    try {
+      const { titleFromFileName } = await import(new URL("../src/lib/format.js", import.meta.url));
+      const { rows } = await client.query(
+        "SELECT id, original_name FROM media WHERE title IS NULL AND original_name IS NOT NULL",
+      );
+      let named = 0;
+      for (const row of rows) {
+        const title = titleFromFileName(row.original_name);
+        if (!title) continue;
+        await client.query("UPDATE media SET title = $1 WHERE id = $2 AND title IS NULL", [title, row.id]);
+        named++;
+      }
+      await client.query(
+        "INSERT INTO app_settings (key, value) VALUES ('titles_from_file_names', $1) ON CONFLICT (key) DO NOTHING",
+        [`${named} of ${rows.length}`],
+      );
+      console.log(`Titled ${named} of ${rows.length} earlier uploads from their file names.`);
+    } catch (err) {
+      console.warn("Couldn't add titles from file names (will try again next start):", err.message);
+    }
+  }
+
   // The admin's password always matches ADMIN_PASSWORD: to change it, edit
   // ADMIN_PASSWORD in Coolify and restart the site.
   const username = (process.env.ADMIN_USERNAME || "xtinegar").trim().toLowerCase();
