@@ -128,6 +128,18 @@ export function insertMedia(media) {
   );
 }
 
+/** One upload with its creator, for its own page (/creator/v/123). */
+export function getMediaWithCreator(id) {
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) return null;
+  return queryOne(
+    `SELECT m.*, c.slug AS creator_slug, c.name AS creator_name, c.tier AS creator_tier,
+            c.avatar_key AS creator_avatar_key, c.avatar_blur_key AS creator_avatar_blur_key
+       FROM media m JOIN creators c ON c.id = m.creator_id
+      WHERE m.id = $1`,
+    [Number(id)],
+  );
+}
+
 /** The saved file an upload turned into, if it finished. */
 export function findMediaByUpload(uploadId) {
   return queryOne(

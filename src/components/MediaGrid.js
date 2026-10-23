@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiFilm, FiImage, FiPlay, FiTrash2, FiX } from "react-icons/fi";
+import Link from "next/link";
+import { FiExternalLink, FiFilm, FiImage, FiPlay, FiShare2, FiTrash2, FiX } from "react-icons/fi";
 import { formatDuration } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
 
-function Viewer({ item, onClose }) {
+function Viewer({ item, onClose, pageHref, shareable }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -39,11 +40,22 @@ function Viewer({ item, onClose }) {
             autoPlay
             playsInline
             preload="metadata"
-            className="max-h-[88dvh] max-w-full rounded-xl bg-black"
+            className="max-h-[82dvh] max-w-full rounded-xl bg-black"
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.url} alt="" className="max-h-[88dvh] max-w-full rounded-xl object-contain" />
+          <img src={item.url} alt="" className="max-h-[82dvh] max-w-full rounded-xl object-contain" />
+        )}
+        {pageHref && (
+          <div className="mt-3 flex justify-center">
+            <Link
+              href={shareable ? `${pageHref}#share` : pageHref}
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
+            >
+              {shareable ? <FiShare2 aria-hidden /> : <FiExternalLink aria-hidden />}
+              {shareable ? "Share" : "Open on its own page"}
+            </Link>
+          </div>
         )}
       </div>
     </div>
@@ -129,7 +141,7 @@ const TABS = [
  * A creator's uploads, split into Videos and Photos tabs. Videos is
  * selected unless the link says ?tab=photos.
  */
-export default function MediaGrid({ items, canManage, initialTab = "videos" }) {
+export default function MediaGrid({ items, canManage, initialTab = "videos", creatorSlug, shareable = false }) {
   const [open, setOpen] = useState(null);
   const [tab, setTab] = useState(initialTab === "photos" ? "photos" : "videos");
 
@@ -195,7 +207,14 @@ export default function MediaGrid({ items, canManage, initialTab = "videos" }) {
           </ul>
         )}
       </div>
-      {open && <Viewer item={open} onClose={() => setOpen(null)} />}
+      {open && (
+        <Viewer
+          item={open}
+          onClose={() => setOpen(null)}
+          pageHref={creatorSlug ? `/${creatorSlug}/v/${open.id}` : null}
+          shareable={shareable}
+        />
+      )}
     </>
   );
 }

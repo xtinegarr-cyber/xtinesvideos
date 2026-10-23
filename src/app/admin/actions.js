@@ -7,6 +7,7 @@ import { stripe, stripeConfigured } from "@/lib/stripe";
 import { validatePassword, validateUsername } from "@/lib/passwords";
 import { requireAdmin } from "@/lib/session";
 import { deleteFiles } from "@/lib/storage";
+import { decideClaim } from "@/lib/vip-pass";
 
 function idFrom(formData, field) {
   const id = Number(formData.get(field));
@@ -72,5 +73,12 @@ export async function deleteMemberAction(formData) {
     await stripe().subscriptions.cancel(member.stripe_subscription_id);
   }
   await deleteMember(id);
+  revalidatePath("/admin");
+}
+
+/** Free VIP from Reddit: approve or reject a post that couldn't be checked automatically. */
+export async function decideClaimAction(formData) {
+  await requireAdmin();
+  await decideClaim(idFrom(formData, "claimId"), formData.get("decision") === "approve");
   revalidatePath("/admin");
 }

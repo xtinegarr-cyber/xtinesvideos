@@ -6,19 +6,31 @@ import { requireAdmin, siteUrl } from "@/lib/session";
 import { SITE_NAME } from "@/lib/site";
 import { fileUrl, storageConfigured } from "@/lib/storage";
 import { stripeConfigured } from "@/lib/stripe";
+import { redditApiConfigured } from "@/lib/reddit";
+import { listClaimsForAdmin } from "@/lib/vip-pass";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: `Admin panel – ${SITE_NAME}`, robots: { index: false } };
 
 export default async function AdminPage() {
   const viewer = await requireAdmin();
-  const [stats, creatorRows, memberRows, checkoutRows, base] = await Promise.all([
+  const [stats, creatorRows, memberRows, checkoutRows, base, claimRows] = await Promise.all([
     siteStats(),
     listCreatorsForAdmin(),
     listVipMembers(),
     listUnclaimedCheckouts(),
     siteUrl(),
+    listClaimsForAdmin(),
   ]);
+  const claim = (c) => ({
+    id: Number(c.id),
+    postUrl: c.post_url,
+    code: c.ref_code,
+    author: c.reddit_author,
+    status: c.status,
+    note: c.note,
+    createdAt: new Date(c.created_at).toISOString(),
+  });
   const now = Date.now();
 
   const creators = await Promise.all(
@@ -66,6 +78,8 @@ export default async function AdminPage() {
         createdAt: new Date(c.created_at).toISOString(),
         setupUrl: `${base}/vip/success?session_id=${c.session_id}`,
       }))}
+      redditClaims={{ pending: claimRows.pending.map(claim), recent: claimRows.recent.map(claim) }}
+      redditApi={redditApiConfigured()}
       storageReady={storageConfigured()}
       stripeReady={stripeConfigured()}
     />

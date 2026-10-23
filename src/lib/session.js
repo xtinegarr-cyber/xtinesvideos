@@ -4,6 +4,7 @@ import { cache } from "react";
 import { query, queryOne } from "./db";
 import { hashToken, newSessionToken } from "./passwords";
 import { toViewer } from "./vip";
+import { activePass, readRefCode } from "./vip-pass";
 
 export const SESSION_COOKIE = "xv_session";
 const SESSION_DAYS = 30;
@@ -46,6 +47,17 @@ export const getViewer = cache(async () => {
     [hashToken(token)],
   );
   return toViewer(row);
+});
+
+/**
+ * Who can see VIP content on this request: VIP members, plus anyone with
+ * a 30-minute pass from posting on Reddit (no account needed).
+ * `viewer` is still the logged-in member (or null) for everything else.
+ */
+export const getAccess = cache(async () => {
+  const viewer = await getViewer();
+  const pass = viewer?.isVip ? null : await activePass(await readRefCode());
+  return { viewer, pass, isVip: Boolean(viewer?.isVip || pass) };
 });
 
 /** For admin pages and server actions: sends everyone else to the login page. */

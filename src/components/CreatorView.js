@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { FiArrowLeft, FiEye, FiLock } from "react-icons/fi";
+import { FiArrowLeft, FiEye, FiGift, FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import CreatorImage from "./CreatorImage";
 import MediaGrid from "./MediaGrid";
 import ViewTracker from "./ViewTracker";
 import { GetVipButton } from "./VipForms";
 import { formatViews } from "@/lib/format";
+import { PASS_MINUTES } from "@/lib/free-vip";
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -39,6 +40,9 @@ function VipGate({ creator, counts, viewer, priceLabel }) {
         <GetVipButton formClassName="w-full max-w-xs" className="h-12 w-full px-7">
           Get VIP for {priceLabel}/month
         </GetVipButton>
+        <Link href="/vip/reddit" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-fg">
+          <FiGift aria-hidden /> Or get {PASS_MINUTES} minutes free by sharing on Reddit
+        </Link>
         {!viewer && (
           <Link
             href={`/login?next=/${creator.slug}`}
@@ -106,7 +110,7 @@ export default function CreatorView({ viewer, creator, items, counts, canManage,
           <VipGate creator={creator} counts={counts} viewer={viewer} priceLabel={priceLabel} />
         ) : (
           <div className="mt-8">
-            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} />
+            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} creatorSlug={creator.slug} shareable={!vip} />
           </div>
         )}
       </main>

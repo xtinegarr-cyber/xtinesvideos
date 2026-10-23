@@ -1,7 +1,8 @@
 import { Bricolage_Grotesque } from "next/font/google";
-import { getViewer } from "@/lib/session";
+import { getAccess } from "@/lib/session";
 import VipPopup from "@/components/VipPopup";
 import SiteBackdrop from "@/components/SiteBackdrop";
+import VipPassBar from "@/components/VipPassBar";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
 import "./globals.css";
 
@@ -23,13 +24,14 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const viewer = await getViewer();
+  const access = await getAccess();
   return (
     <html lang="en" className={brand.variable}>
       <body className="min-h-dvh">
         <SiteBackdrop />
         {children}
-        {!viewer?.isVip && <VipPopup priceLabel={VIP_PRICE_LABEL} />}
+        {!access.isVip && <VipPopup priceLabel={VIP_PRICE_LABEL} />}
+        {access.pass && <VipPassBar until={access.pass.until.toISOString()} />}
       </body>
     </html>
   );

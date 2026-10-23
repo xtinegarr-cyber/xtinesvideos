@@ -7,9 +7,10 @@ import { ChangePhotoButton, CreateCreatorForm } from "./CreatorForms";
 import MemberForm from "./MemberForm";
 import ConfirmButton from "./ConfirmButton";
 import CopyLink from "./CopyLink";
-import { deleteCreatorAction, deleteMemberAction, setTierAction } from "@/app/admin/actions";
+import { decideClaimAction, deleteCreatorAction, deleteMemberAction, setTierAction } from "@/app/admin/actions";
 import { formatDate, formatViews } from "@/lib/format";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
+import { PASS_MINUTES } from "@/lib/free-vip";
 
 function Section({ id, title, description, children }) {
   return (
@@ -180,7 +181,97 @@ function PendingCheckouts({ checkouts }) {
   );
 }
 
-export default function AdminView({ viewer, stats, creators, members, pendingCheckouts = [], storageReady, stripeReady }) {
+function formatWhen(iso) {
+  // The server runs on UTC; show times in your own time zone.
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: process.env.ADMIN_TIMEZONE || "America/Chicago",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function RedditClaims({ claims, apiConfigured }) {
+  const { pending = [], recent = [] } = claims;
+  return (
+    <>
+      <p className="text-sm text-muted">
+        {apiConfigured
+          ? "Posts are checked automatically with your Reddit app. Anything Reddit wouldn’t answer for lands here."
+          : "Without a Reddit app (REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET) posts are checked through Reddit’s public data when Reddit allows it. Anything it blocks lands here."}
+      </p>
+      <h3 className="mt-6 font-bold">Waiting for you ({pending.length})</h3>
+      {pending.length ? (
+        <ul className="mt-3 divide-y divide-line rounded-2xl border border-line">
+          {pending.map((c) => (
+            <li key={c.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1 text-sm">
+                <a href={c.postUrl} target="_blank" rel="noopener noreferrer" className="block truncate font-semibold text-gold underline-offset-2 hover:underline">
+                  {c.postUrl}
+                </a>
+                <p className="mt-1 text-muted">
+                  Check the post is up and links to a free creator’s video ending in{" "}
+                  <span className="rounded bg-raised px-1.5 py-0.5 font-mono text-fg">?r={c.code}</span>. Sent {formatWhen(c.createdAt)}.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <form action={decideClaimAction}>
+                  <input type="hidden" name="claimId" value={c.id} />
+                  <input type="hidden" name="decision" value="approve" />
+                  <button type="submit" className="btn-vip h-10 px-4 text-sm">Approve</button>
+                </form>
+                <form action={decideClaimAction}>
+                  <input type="hidden" name="claimId" value={c.id} />
+                  <input type="hidden" name="decision" value="reject" />
+                  <button type="submit" className="inline-flex h-10 items-center rounded-full border border-line px-4 text-sm font-semibold hover:border-rose hover:text-[#ffb3cb]">
+                    Reject
+                  </button>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-muted">Nothing waiting.</p>
+      )}
+      {recent.length > 0 && (
+        <>
+          <h3 className="mt-6 font-bold">Recent</h3>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {recent.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                    c.status === "approved" ? "bg-[#9be4b8]/15 text-[#9be4b8]" : "bg-rose/15 text-[#ffb3cb]"
+                  }`}
+                >
+                  {c.status === "approved" ? "Approved" : "Rejected"}
+                </span>
+                <a href={c.postUrl} target="_blank" rel="noopener noreferrer" className="truncate text-muted underline-offset-2 hover:text-fg hover:underline">
+                  {c.author ? `u/${c.author}` : c.postUrl}
+                </a>
+                <span className="text-muted/70">{formatWhen(c.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
+export default function AdminView({
+  viewer,
+  stats,
+  creators,
+  members,
+  pendingCheckouts = [],
+  redditClaims = { pending: [], recent: [] },
+  redditApi = false,
+  storageReady,
+  stripeReady,
+}) {
   const uploadCreators = creators.map(({ id, name, tier }) => ({ id, name, tier }));
   const activeMembers = members.filter((m) => m.active).length;
   const toReview = members.filter(needsReview).length;
@@ -231,6 +322,14 @@ export default function AdminView({ viewer, stats, creators, members, pendingChe
               <p className="py-6 text-muted">No creators yet. Create the first one above.</p>
             )}
           </div>
+        </Section>
+
+        <Section
+          id="reddit-heading"
+          title={`Free VIP from Reddit${redditClaims.pending.length ? ` (${redditClaims.pending.length} waiting)` : ""}`}
+          description={`Visitors who shared a free creator’s video on Reddit get ${PASS_MINUTES} minutes of VIP, once a day. No account needed: it’s tied to their browser.`}
+        >
+          <RedditClaims claims={redditClaims} apiConfigured={redditApi} />
         </Section>
 
         <Section

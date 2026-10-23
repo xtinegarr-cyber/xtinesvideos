@@ -39,10 +39,10 @@ function Empty({ children }) {
 /**
  * free / vip: arrays of card data (see CreatorCard).
  */
-export default function HomeView({ viewer, search, free, vip, priceLabel }) {
+export default function HomeView({ viewer, isVip = Boolean(viewer?.isVip), search, free, vip, priceLabel }) {
   const searching = Boolean(search);
   const noResults = searching && free.length === 0 && vip.length === 0;
-  const showVipPitch = !viewer?.isVip;
+  const showVipPitch = !isVip;
 
   return (
     <>
@@ -92,7 +92,7 @@ export default function HomeView({ viewer, search, free, vip, priceLabel }) {
                 }
               >
                 <p className="mt-1.5 text-sm text-muted">
-                  {viewer?.isVip
+                  {isVip
                     ? "You have VIP, so every profile here is unlocked."
                     : `Unlock every VIP profile for ${priceLabel} a month. Cancel anytime.`}
                 </p>

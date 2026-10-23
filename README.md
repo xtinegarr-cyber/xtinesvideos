@@ -60,6 +60,24 @@ memberships are sold with Stripe for $4.99/month.
 - `/account`: members see their status. "Manage or cancel VIP" opens
   Stripe's page for changing their card or canceling.
 
+**Video pages and free VIP from Reddit**
+- Every video and photo has its own page: `/creator_name/v/123`. Open one
+  from the creator's grid with **Share** (free creators) or **Open on its
+  own page** (VIP creators, who stay locked for everyone without VIP).
+- Free creators' video pages have a **Share** box with a personal link
+  (`?r=code`, unique to that browser) and a **Post on Reddit** button.
+- At `/vip/reddit`, visitors paste their Reddit post. The site checks that
+  the post exists, is still up, is less than 24 hours old, and links to a
+  free creator's video with *their* code. If so, they get 30 minutes of VIP
+  in that browser, no account needed, with a countdown at the bottom of the
+  screen. Each post works once; each browser and Reddit account once a day.
+- Reddit only lets approved apps read posts reliably. Add `REDDIT_CLIENT_ID`
+  and `REDDIT_CLIENT_SECRET` once Reddit approves your app. Until then the
+  site tries Reddit's public data, and anything Reddit won't show goes to
+  **Free VIP from Reddit** in the admin panel. Approve it there and the
+  visitor's 30 minutes start on their next visit.
+- Rewarding posts can be treated as spam by Reddit and subreddit rules.
+
 ### How uploads become fast-loading videos
 
 1. The file is sent to your server in 25 MB pieces.

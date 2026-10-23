@@ -92,3 +92,25 @@ CREATE TABLE IF NOT EXISTS creator_views (
   PRIMARY KEY (creator_id, visitor_hash, view_date)
 );
 CREATE INDEX IF NOT EXISTS creator_views_date_idx ON creator_views (view_date);
+
+-- "Post on Reddit, get 30 minutes of VIP". One row per Reddit post. The
+-- reward belongs to a browser (ref_code, the code in its share links), so
+-- visitors don't need an account. pass_until is set when the 30 minutes
+-- start: right away for posts checked automatically, or on the visitor's
+-- next page view after an admin approves a post by hand.
+CREATE TABLE IF NOT EXISTS reddit_claims (
+  id            BIGSERIAL PRIMARY KEY,
+  ref_code      TEXT NOT NULL,
+  post_id       TEXT,
+  post_url      TEXT NOT NULL,
+  reddit_author TEXT,
+  status        TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
+  note          TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  approved_at   TIMESTAMPTZ,
+  pass_until    TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS reddit_claims_post_idx ON reddit_claims (post_id);
+CREATE UNIQUE INDEX IF NOT EXISTS reddit_claims_url_idx ON reddit_claims (lower(post_url));
+CREATE INDEX IF NOT EXISTS reddit_claims_ref_idx ON reddit_claims (ref_code, created_at DESC);
+CREATE INDEX IF NOT EXISTS reddit_claims_author_idx ON reddit_claims (lower(reddit_author), created_at DESC);

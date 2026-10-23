@@ -4,7 +4,7 @@ import CreatorView from "@/components/CreatorView";
 import { getCreatorBySlug, listMedia } from "@/lib/creators";
 import { creatorCard, mediaItem } from "@/lib/cards";
 import { SLUG_PATTERN } from "@/lib/format";
-import { getViewer } from "@/lib/session";
+import { getAccess } from "@/lib/session";
 import { SITE_NAME } from "@/lib/site";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
 
@@ -43,8 +43,9 @@ export default async function CreatorPage({ params, searchParams }) {
   const row = await findCreator(slug);
   if (!row) notFound();
 
-  const viewer = await getViewer();
-  const creator = await creatorCard(row, viewer);
+  const access = await getAccess();
+  const viewer = access.viewer;
+  const creator = await creatorCard(row, access);
   const media = await listMedia(row.id);
   const counts = {
     videos: media.filter((m) => m.kind === "video").length,
