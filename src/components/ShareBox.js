@@ -16,7 +16,7 @@ export default function ShareBox({ path, title, minutes, showReward }) {
     let cancelled = false;
     fetch("/api/share-code", { cache: "no-store" })
       .then((res) => res.json())
-      .then(({ code }) => !cancelled && setLink(`${window.location.origin}${path}?r=${code}`))
+      .then(({ code }) => !cancelled && setLink(`${window.location.origin}${path}${code ? `?r=${code}` : ""}`))
       .catch(() => !cancelled && setLink(`${window.location.origin}${path}`));
     return () => {
       cancelled = true;

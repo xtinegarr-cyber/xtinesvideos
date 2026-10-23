@@ -1,6 +1,7 @@
 // One video or photo on its own page: yoursite.com/creator_name/v/123.
 // Free creators' videos can be shared from here (for free VIP on Reddit).
 import { notFound, permanentRedirect } from "next/navigation";
+import { cache } from "react";
 import VideoView from "@/components/VideoView";
 import { getMediaWithCreator, listMedia } from "@/lib/creators";
 import { mediaItem } from "@/lib/cards";
@@ -13,9 +14,8 @@ import { PASS_MINUTES } from "@/lib/vip-pass";
 
 export const dynamic = "force-dynamic";
 
-async function find(id) {
-  return /^\d{1,15}$/.test(String(id)) ? getMediaWithCreator(Number(id)) : null;
-}
+// Cached so the page and its metadata share one database lookup.
+const find = cache(async (id) => (/^\d{1,15}$/.test(String(id)) ? getMediaWithCreator(Number(id)) : null));
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -53,7 +53,7 @@ export default async function MediaPage({ params }) {
 
   const access = await getAccess();
   const locked = media.creator_tier === "vip" && !access.isVip;
-  const item = await mediaItem(media, locked);
+  const item = await mediaItem(media, locked, { withFile: true });
   const free = media.creator_tier === "free";
   // A few more of the same kind (videos after a video), newest first.
   const more = locked

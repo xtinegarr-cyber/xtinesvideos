@@ -43,17 +43,41 @@ const BLUR_FILTER = `gblur=sigma=${BLUR_SIGMA}`;
 
 export class MediaError extends Error {}
 
-function run(command, args) {
+/** True if ffmpeg actually wrote something to this file. */
+async function hasData(file) {
+  if (!file) return false;
+  const stat = await fs.stat(file).catch(() => null);
+  return Boolean(stat && stat.size > 0);
+}
+
+// How long one ffmpeg step may run. A damaged file can make ffmpeg hang,
+// and a hung file would block a processing slot until the next restart.
+const QUICK_STEP_MS = 5 * 60 * 1000; // reading a file, making thumbnails
+const LONG_STEP_MS = 6 * 60 * 60 * 1000; // converting a video
+
+function run(command, args, timeoutMs = QUICK_STEP_MS) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGKILL");
+    }, timeoutMs);
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr = (stderr + d).slice(-4000)));
-    child.on("error", (err) =>
-      reject(err.code === "ENOENT" ? new MediaError(`${command} is not installed on the server.`) : err),
-    );
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err.code === "ENOENT" ? new MediaError(`${command} is not installed on the server.`) : err);
+    });
     child.on("close", (code) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        const err = new MediaError("This file took too long to process, so it was skipped. It may be damaged; try exporting it again.");
+        err.detail = `${command} was stopped after ${Math.round(timeoutMs / 60000)} minutes`;
+        return reject(err);
+      }
       if (code === 0) return resolve({ stdout, stderr });
       // The admin sees a plain message; the server log gets ffmpeg's details.
       const err = new MediaError("This file couldn't be converted. It may be damaged or in an unusual format.");
@@ -220,17 +244,27 @@ export async function processVideo(input, outDir) {
   let reencoded = false;
   if (canCopy) {
     try {
-      await run("ffmpeg", copyArgs);
+      await run("ffmpeg", copyArgs, LONG_STEP_MS);
     } catch {
       reencoded = true;
-      await run("ffmpeg", encodeArgs);
+      await run("ffmpeg", encodeArgs, LONG_STEP_MS);
     }
   } else {
     reencoded = true;
-    await run("ffmpeg", encodeArgs);
+    await run("ffmpeg", encodeArgs, LONG_STEP_MS);
   }
 
-  const thumbs = await makeThumbs({ input: main, seekSeconds: thumbnailTime(duration), outDir });
+  const seekSeconds = thumbnailTime(duration);
+  let thumbs = await makeThumbs({ input: main, seekSeconds, outDir }).catch((err) => {
+    if (!seekSeconds) throw err;
+    return null;
+  });
+  // Some files say they're longer than they are, so there's no picture at
+  // the 15-second mark. Take the thumbnail from the start instead.
+  if (!thumbs || !(await hasData(thumbs.thumb)) || !(await hasData(thumbs.thumbBlur))) {
+    thumbs = await makeThumbs({ input: main, seekSeconds: 0, outDir });
+    if (!(await hasData(thumbs.thumb))) throw new MediaError("No picture could be taken from this video for its thumbnail. It may be damaged.");
+  }
   const finalInfo = await probe(main);
   const finalVideo = finalInfo.streams.find((s) => s.codec_type === "video");
 
@@ -245,11 +279,23 @@ export async function processVideo(input, outDir) {
 }
 
 export async function processImage(input, outDir, originalName = "") {
+  const ext = path.extname(originalName || input).toLowerCase();
+  try {
+    return await convertImage(input, outDir, ext);
+  } catch (err) {
+    // The server's ffmpeg can't read iPhone HEIC photos; say what to do.
+    if (err instanceof MediaError && (ext === ".heic" || ext === ".heif")) {
+      err.message = "iPhone HEIC photos can't be converted here. Save it as a JPEG (on iPhone: Settings → Camera → Formats → Most Compatible) and upload it again.";
+    }
+    throw err;
+  }
+}
+
+async function convertImage(input, outDir, ext) {
   const info = await probe(input);
   const stream = info.streams.find((s) => s.codec_type === "video");
   if (!stream) throw new MediaError("This file isn't an image ffmpeg can read.");
 
-  const ext = path.extname(originalName || input).toLowerCase();
   const orientation = await jpegOrientation(input);
   const orient = ORIENT_FILTERS[orientation] ?? "";
   const turned = orientation >= 5; // stored sideways

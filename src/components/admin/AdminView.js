@@ -8,7 +8,7 @@ import MemberForm from "./MemberForm";
 import ConfirmButton from "./ConfirmButton";
 import CopyLink from "./CopyLink";
 import { decideClaimAction, deleteCreatorAction, deleteMemberAction, setTierAction } from "@/app/admin/actions";
-import { formatDate, formatViews } from "@/lib/format";
+import { formatDate, formatViews, SITE_TIME_ZONE } from "@/lib/format";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
 import { PASS_MINUTES } from "@/lib/free-vip";
 
@@ -184,7 +184,7 @@ function PendingCheckouts({ checkouts }) {
 function formatWhen(iso) {
   // The server runs on UTC; show times in your own time zone.
   return new Date(iso).toLocaleString("en-US", {
-    timeZone: process.env.ADMIN_TIMEZONE || "America/Chicago",
+    timeZone: SITE_TIME_ZONE,
     month: "short",
     day: "numeric",
     hour: "numeric",

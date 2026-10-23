@@ -55,11 +55,51 @@ export function formatDuration(seconds) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
+// The server runs on UTC; dates are shown (and picked in the admin panel)
+// in this time zone. Set ADMIN_TIMEZONE to change it.
+function siteTimeZone() {
+  const wanted = (typeof process !== "undefined" && process.env?.ADMIN_TIMEZONE) || "America/Chicago";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: wanted });
+    return wanted;
+  } catch {
+    return "America/Chicago"; // a typo in ADMIN_TIMEZONE mustn't break pages
+  }
+}
+export const SITE_TIME_ZONE = siteTimeZone();
+
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
+  timeZone: SITE_TIME_ZONE,
 });
+
+const zoneParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: SITE_TIME_ZONE,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+/** How far the site's time zone is ahead of UTC at a moment, in ms. */
+function zoneOffset(ms) {
+  const p = Object.fromEntries(zoneParts.formatToParts(ms).map((x) => [x.type, Number(x.value)]));
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(ms / 1000) * 1000;
+}
+
+/** "2026-10-31" -> the last second of that day in the site's time zone. Null if invalid. */
+export function endOfDay(dateText) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateText))) return null;
+  const wall = Date.parse(`${dateText}T23:59:59Z`);
+  if (Number.isNaN(wall)) return null;
+  const first = wall - zoneOffset(wall);
+  return new Date(wall - zoneOffset(first)); // second pass: right across daylight saving changes
+}
 
 export function formatDate(value) {
   if (!value) return "";

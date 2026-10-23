@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { deleteCreator, deleteMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
-import { cleanTitle } from "@/lib/format";
+import { cleanTitle, endOfDay } from "@/lib/format";
 import { createUser, deleteMember, findUserById } from "@/lib/members";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { validatePassword, validateUsername } from "@/lib/passwords";
@@ -50,9 +50,9 @@ export async function createMemberAction(_prev, formData) {
 
   let vipUntil = null;
   if (until) {
-    // Access lasts through the end of the chosen day.
-    vipUntil = new Date(`${until}T23:59:59`);
-    if (Number.isNaN(vipUntil.getTime()) || vipUntil.getTime() < Date.now()) {
+    // Access lasts through the end of the chosen day (your time, not the server's).
+    vipUntil = endOfDay(until);
+    if (!vipUntil || vipUntil.getTime() < Date.now()) {
       return { error: "Pick an end date in the future, or leave it empty for no end date.", ok: null };
     }
   }
@@ -69,9 +69,15 @@ export async function deleteMemberAction(formData) {
   const member = await findUserById(id);
   if (!member) return;
   // Stop billing before the account disappears, or they'd keep being charged.
-  if (member.stripe_subscription_id && ["active", "trialing", "past_due"].includes(member.stripe_status)) {
+  if (member.stripe_subscription_id && ["active", "trialing", "past_due", "unpaid"].includes(member.stripe_status)) {
     if (!stripeConfigured()) throw new Error("Stripe keys are missing, so this member's subscription can't be canceled.");
-    await stripe().subscriptions.cancel(member.stripe_subscription_id);
+    try {
+      await stripe().subscriptions.cancel(member.stripe_subscription_id);
+    } catch (err) {
+      // Already canceled or deleted on Stripe's side: nothing left to stop.
+      const gone = err?.code === "resource_missing" || err?.statusCode === 404 || /canceled/i.test(err?.message || "");
+      if (!gone) throw err;
+    }
   }
   await deleteMember(id);
   revalidatePath("/admin");

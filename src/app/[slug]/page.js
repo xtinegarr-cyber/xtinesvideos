@@ -1,5 +1,6 @@
 // Creator profiles live at the top level: yoursite.com/gamercool_123
 import { notFound, permanentRedirect } from "next/navigation";
+import { cache } from "react";
 import CreatorView from "@/components/CreatorView";
 import { getCreatorBySlug, listMedia } from "@/lib/creators";
 import { creatorCard, mediaItem } from "@/lib/cards";
@@ -10,9 +11,8 @@ import { VIP_PRICE_LABEL } from "@/lib/vip";
 
 export const dynamic = "force-dynamic";
 
-function findCreator(slug) {
-  return SLUG_PATTERN.test(slug) ? getCreatorBySlug(slug) : null;
-}
+// Cached so the page and its metadata share one database lookup.
+const findCreator = cache(async (slug) => (SLUG_PATTERN.test(slug) ? getCreatorBySlug(slug) : null));
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

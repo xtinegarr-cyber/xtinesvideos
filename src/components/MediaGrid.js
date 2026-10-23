@@ -15,7 +15,14 @@ function Thumb({ item }) {
     return (
       <>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.thumbUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl" />
+        <img
+          src={item.thumbUrl}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+        />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={item.thumbUrl} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-contain" />
       </>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
-import { quietButton } from "@/components/forms";
+import { FormError, quietButton } from "@/components/forms";
 import { GetVipButton } from "@/components/VipForms";
 import { manageSubscriptionAction } from "@/app/vip/actions";
 import { logout } from "@/app/actions";
@@ -35,7 +35,8 @@ function subscriptionStatus(viewer) {
   }
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }) {
+  const { error } = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect("/login?next=/account");
   if (viewer.isAdmin) redirect("/admin");
@@ -55,6 +56,9 @@ export default async function AccountPage() {
             <p className="text-lg font-semibold">{vipStatus(viewer)}</p>
             {subscriptionStatus(viewer) && <p className="mt-1 text-sm text-muted">{subscriptionStatus(viewer)}</p>}
           </div>
+          {error === "billing" && (
+            <FormError message="The billing page couldn’t be opened just now. Try again in a minute, or message us on Discord or Telegram." />
+          )}
           <div className="flex flex-wrap gap-2 border-t border-line pt-6">
             {viewer.hasStripe && (
               <form action={manageSubscriptionAction}>

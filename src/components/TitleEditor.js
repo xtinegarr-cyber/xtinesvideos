@@ -16,7 +16,7 @@ function Save() {
   );
 }
 
-/** Admins only: rename a video or photo right on its page. */
+/** Admins only: rename a video right on its page (photos don't have titles). */
 export default function TitleEditor({ mediaId, title, placeholder }) {
   const [state, action] = useActionState(setMediaTitleAction, null);
   return (

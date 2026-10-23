@@ -19,8 +19,13 @@ export async function creatorCard(row, viewer, now = Date.now()) {
   };
 }
 
-/** Database media row -> grid item. Locked items get no playable link. */
-export async function mediaItem(row, locked) {
+/**
+ * Database media row -> grid item. Only the video's or photo's own page
+ * asks for `withFile` (the link to play or open it); grids just need the
+ * thumbnail, which keeps big creator pages small and fast. Locked items
+ * never get a file link.
+ */
+export async function mediaItem(row, locked, { withFile = false } = {}) {
   return {
     id: Number(row.id),
     kind: row.kind,
@@ -29,6 +34,6 @@ export async function mediaItem(row, locked) {
     height: row.height,
     duration: row.duration_seconds,
     thumbUrl: await fileUrl(locked ? row.thumb_blur_key : row.thumb_key),
-    url: locked ? null : await fileUrl(row.file_key),
+    url: withFile && !locked ? await fileUrl(row.file_key) : null,
   };
 }

@@ -56,6 +56,14 @@ export async function manageSubscriptionAction() {
   const viewer = await getViewer();
   if (!viewer) redirect("/login?next=/account");
   if (!stripeConfigured()) redirect("/account");
-  const url = await createBillingPortal(viewer, await siteUrl());
+  let url = null;
+  try {
+    url = await createBillingPortal(viewer, await siteUrl());
+  } catch (err) {
+    // Usually: the customer portal hasn't been switched on in Stripe yet
+    // (Stripe dashboard → Settings → Billing → Customer portal).
+    console.error("Stripe billing portal failed:", err?.message || err);
+    redirect("/account?error=billing");
+  }
   redirect(url || "/account");
 }

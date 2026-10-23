@@ -92,6 +92,8 @@ async function processUpload(id) {
   await fs.rm(workDir, { recursive: true, force: true }); // leftovers from an interrupted run
   await fs.mkdir(workDir, { recursive: true });
 
+  // Files sent to R2 for this upload, removed again if it fails afterwards.
+  let sent = null;
   try {
     const creator = await getCreatorById(meta.creatorId);
     if (!creator) throw new MediaError("That creator was deleted before the upload finished.");
@@ -109,6 +111,7 @@ async function processUpload(id) {
       thumb: result.thumb ? `${base}/thumb.jpg` : file,
       thumbBlur: `${base}/thumb-blur.jpg`,
     };
+    sent = [keys.file, keys.thumb, keys.thumbBlur];
     await Promise.all([
       uploadFile(keys.file, result.main.path, result.main.contentType),
       result.thumb && uploadFile(keys.thumb, result.thumb, "image/jpeg"),
@@ -135,14 +138,22 @@ async function processUpload(id) {
       await deleteFiles([keys.file, keys.thumb, keys.thumbBlur]);
       row = await findMediaByUpload(id);
     }
+    sent = null; // saved: the files belong to the site now
 
     meta.status = "done";
     meta.mediaId = Number(row.id);
     meta.creatorSlug = creator.slug;
   } catch (err) {
     console.error(`Processing upload ${id} (${meta.fileName}) failed:`, err.detail || err);
+    // e.g. the creator was deleted while this was processing.
+    if (sent) await deleteFiles(sent).catch(() => {});
     meta.status = "failed";
-    meta.error = err instanceof MediaError || err instanceof StorageError ? err.message : "Processing failed. The server log has details.";
+    meta.error =
+      err instanceof MediaError || err instanceof StorageError
+        ? err.message
+        : err?.code === "23503" // the database no longer has this creator
+          ? "That creator was deleted before the upload finished."
+          : "Processing failed. The server log has details.";
   } finally {
     // Keep only the small status file; the video itself is now on R2.
     await fs.rm(input, { force: true });
