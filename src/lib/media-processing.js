@@ -265,7 +265,7 @@ export async function processImage(input, outDir, originalName = "") {
     main = { path: converted, contentType: "image/jpeg", ext: ".jpg" };
   }
 
-  const { size } = await fs.stat(main.path);
+  const { size } = await fs.stat(/*turbopackIgnore: true*/ main.path);
   const ownThumb =
     main.path === input && Math.max(width || Infinity, height || Infinity) <= SELF_THUMB_MAX_SIDE && size <= SELF_THUMB_MAX_BYTES;
   const thumbs = await makeThumbs({ input, seekSeconds: 0, outDir, orient, blurOnly: ownThumb });

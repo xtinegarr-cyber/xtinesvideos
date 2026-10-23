@@ -156,7 +156,7 @@ export function goneError() {
 export async function listUploads() {
   let names;
   try {
-    names = await fs.readdir(uploadsRoot());
+    names = await fs.readdir(/*turbopackIgnore: true*/ uploadsRoot());
   } catch {
     return [];
   }
@@ -173,7 +173,7 @@ export async function removeStaleUploads() {
   const root = uploadsRoot();
   await fs.mkdir(root, { recursive: true });
   const now = Date.now();
-  for (const name of await fs.readdir(root)) {
+  for (const name of await fs.readdir(/*turbopackIgnore: true*/ root)) {
     if (!ID_PATTERN.test(name)) continue;
     const stat = await fs.stat(path.join(root, name)).catch(() => null);
     if (stat && now - stat.mtimeMs > STALE_AFTER_MS) {
