@@ -209,7 +209,7 @@ export default function AdminView({ viewer, stats, creators, members, pendingChe
         <Section
           id="upload-heading"
           title="Upload videos and photos"
-          description="Pick a creator, then drop files. Each one is optimized to load fast, gets a thumbnail, and appears on that creator’s page when it’s ready. Keep this tab open until uploads reach 100%."
+          description="Pick a creator, drop files, then pick another creator and drop more. Everything goes into one line and uploads in order. Each file is optimized to load fast, gets a thumbnail, and appears on the creator’s page when it’s ready. Keep this tab open until everything is sent; processing finishes on the server."
         >
           <UploadPanel creators={uploadCreators} storageReady={storageReady} />
         </Section>

@@ -4,15 +4,17 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { getCreatorById, insertMedia } from "./creators";
+import { findMediaByUpload, getCreatorById, insertMedia } from "./creators";
 import { detectKind, MediaError, processImage, processVideo } from "./media-processing";
-import { StorageError, uploadFile } from "./storage";
-import { readUpload, saveUpload, uploadDir, uploadFilePath } from "./uploads";
+import { deleteFiles, StorageError, uploadFile } from "./storage";
+import { listUploads, readUpload, saveUpload, uploadDir, uploadFilePath } from "./uploads";
 
-const queue = globalThis.__xvJobs ?? (globalThis.__xvJobs = { running: 0, waiting: [], active: new Set() });
+const queue =
+  globalThis.__xvJobs ?? (globalThis.__xvJobs = { running: 0, waiting: [], active: new Set(), resumed: null });
 const CONCURRENCY = Math.max(1, Number(process.env.PROCESSING_CONCURRENCY) || 1);
 
 export function enqueueUpload(id) {
+  if (queue.active.has(id)) return;
   queue.active.add(id);
   queue.waiting.push(id);
   pump();
@@ -21,6 +23,43 @@ export function enqueueUpload(id) {
 /** False if the server restarted since this upload was queued. */
 export function isTracked(id) {
   return queue.active.has(id);
+}
+
+/** 0 while it's being processed, 1 if it's next, and so on; null if not queued. */
+export function queuePosition(id) {
+  if (!queue.active.has(id)) return null;
+  const index = queue.waiting.indexOf(id);
+  return index === -1 ? 0 : index + 1;
+}
+
+/**
+ * After a restart (e.g. a redeploy), picks up files that had fully arrived
+ * but weren't processed yet. Only possible when the upload folder survives
+ * restarts (a persistent volume); otherwise the admin panel sends the
+ * files again. Runs once per server start.
+ */
+export function resumeInterrupted() {
+  queue.resumed ??= (async () => {
+    for (const meta of await listUploads()) {
+      if (!["queued", "processing"].includes(meta.status) || queue.active.has(meta.id)) continue;
+      const size = await fs
+        .stat(uploadFilePath(meta.id))
+        .then((s) => s.size)
+        .catch(() => -1);
+      if (size === meta.size) {
+        meta.status = "queued";
+        await saveUpload(meta);
+        enqueueUpload(meta.id);
+        console.log(`Resuming ${meta.fileName} after a restart.`);
+      } else {
+        meta.status = "failed";
+        meta.error = "The server restarted before this file was saved. Upload it again.";
+        meta.gone = true;
+        await saveUpload(meta);
+      }
+    }
+  })().catch((err) => console.error("Couldn't resume interrupted uploads:", err));
+  return queue.resumed;
 }
 
 function pump() {
@@ -45,6 +84,7 @@ async function processUpload(id) {
 
   const input = uploadFilePath(id);
   const workDir = path.join(uploadDir(id), "out");
+  await fs.rm(workDir, { recursive: true, force: true }); // leftovers from an interrupted run
   await fs.mkdir(workDir, { recursive: true });
 
   try {
@@ -67,7 +107,7 @@ async function processUpload(id) {
     await uploadFile(keys.thumbBlur, result.thumbBlur, "image/jpeg");
 
     const { size } = await fs.stat(result.main.path);
-    const row = await insertMedia({
+    let row = await insertMedia({
       creatorId: creator.id,
       kind,
       fileKey: keys.file,
@@ -79,7 +119,13 @@ async function processUpload(id) {
       duration: result.duration,
       sizeBytes: size,
       originalName: meta.fileName,
+      uploadId: id,
     });
+    if (!row) {
+      // Already saved by an earlier run of this same upload: keep that one.
+      await deleteFiles([keys.file, keys.thumb, keys.thumbBlur]);
+      row = await findMediaByUpload(id);
+    }
 
     meta.status = "done";
     meta.mediaId = Number(row.id);

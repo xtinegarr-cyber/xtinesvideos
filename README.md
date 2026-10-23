@@ -31,9 +31,14 @@ memberships are sold with Stripe for $4.99/month.
 
 **Admin panel** (`/admin`, for `xtinegar`)
 - Stats: creators, total views, views this week, uploads, and active VIP members.
-- Uploads: pick a creator, then drag in videos and photos. Big files are
-  sent in 25 MB pieces, so they get past Cloudflare's 100 MB limit and
-  resume if the connection drops.
+- Uploads: pick a creator, drag in videos and photos, then pick another
+  creator and drag in more. Everything goes into one line and uploads in
+  order, so a big batch can be left running. Big files are sent in 25 MB
+  pieces, so they get past Cloudflare's 100 MB limit. Dropped connections,
+  redeploys and a briefly full server disk are waited out, not failed.
+  Once every file is sent, the tab can be closed: the server finishes
+  processing on its own. Each saved file remembers the upload it came
+  from, so a file can never be added twice.
 - Creators: add a creator with a profile picture and free or VIP, switch
   them between free and VIP, change their picture, or delete them. Each
   creator shows total views and views this week.

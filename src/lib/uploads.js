@@ -12,6 +12,8 @@ import { randomUUID } from "node:crypto";
 export const CHUNK_BYTES = 25 * 1024 * 1024;
 const MAX_CHUNK_BYTES = 32 * 1024 * 1024;
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+// Room kept free on the server's disk for everything else.
+const DISK_RESERVE_BYTES = 3 * 1024 ** 3;
 
 export function maxUploadBytes() {
   return (Number(process.env.MAX_UPLOAD_GB) || 10) * 1024 ** 3;
@@ -53,6 +55,7 @@ export async function readUpload(id) {
 }
 
 export async function saveUpload(meta) {
+  meta.updatedAt = new Date().toISOString();
   const tmp = `${metaPath(meta.id)}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(meta));
   await fs.rename(tmp, metaPath(meta.id));
@@ -63,19 +66,41 @@ export function uploadFilePath(id) {
   return dataPath(id);
 }
 
-export async function createUpload({ creatorId, fileName, size, type }) {
+/**
+ * Each upload needs room for the original plus its converted copy until
+ * it's on R2. When a big batch outruns processing, new files wait (the
+ * admin panel retries) instead of filling the disk.
+ */
+async function checkDiskSpace(bytes) {
+  let free;
+  try {
+    const stats = await fs.statfs(uploadsRoot());
+    free = Number(stats.bavail) * Number(stats.bsize);
+  } catch {
+    return; // Can't tell; let the upload try.
+  }
+  if (free < bytes * 2 + DISK_RESERVE_BYTES) {
+    throw new UploadError(507, "The server's disk is full for now. This file starts once earlier uploads finish processing.", {
+      full: true,
+    });
+  }
+}
+
+export async function createUpload({ creatorId, creatorName, fileName, size, type }) {
   const bytes = Number(size);
   if (!Number.isInteger(bytes) || bytes <= 0) throw new UploadError(400, "The file is empty.");
   if (bytes > maxUploadBytes()) {
     throw new UploadError(413, `Files can be at most ${process.env.MAX_UPLOAD_GB || 10} GB.`);
   }
   await removeStaleUploads();
+  await checkDiskSpace(bytes);
   const id = randomUUID();
   await fs.mkdir(uploadDir(id), { recursive: true });
   await fs.writeFile(dataPath(id), "");
   return saveUpload({
     id,
     creatorId: Number(creatorId),
+    creatorName: String(creatorName || ""),
     fileName: cleanName(fileName),
     size: bytes,
     type: String(type || ""),
@@ -90,7 +115,7 @@ export async function createUpload({ creatorId, fileName, size, type }) {
 /** Appends one piece. `offset` must match what the server already has. */
 export async function appendChunk(id, offset, body) {
   const meta = await readUpload(id);
-  if (!meta) throw new UploadError(404, "This upload no longer exists. Start it again.");
+  if (!meta) throw goneError();
   if (meta.status !== "uploading") throw new UploadError(409, "This upload is already finished.");
   if (!body) throw new UploadError(400, "The upload piece was empty.");
 
@@ -120,6 +145,23 @@ export async function appendChunk(id, offset, body) {
 
   meta.received = current + written;
   return saveUpload(meta);
+}
+
+/** The server no longer has this upload (it restarted, or it was cleared). */
+export function goneError() {
+  return new UploadError(404, "The server no longer has this upload. Start it again.", { gone: true });
+}
+
+/** Every upload the server still knows about (kept for a day), oldest first. */
+export async function listUploads() {
+  let names;
+  try {
+    names = await fs.readdir(uploadsRoot());
+  } catch {
+    return [];
+  }
+  const metas = await Promise.all(names.filter((n) => ID_PATTERN.test(n)).map((n) => readUpload(n).catch(() => null)));
+  return metas.filter(Boolean).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
 }
 
 export async function removeUpload(id) {

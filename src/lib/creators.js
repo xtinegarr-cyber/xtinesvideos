@@ -103,11 +103,13 @@ export function listMedia(creatorId) {
   );
 }
 
+/** Saves a processed upload. Returns null if this upload was already saved. */
 export function insertMedia(media) {
   return queryOne(
     `INSERT INTO media (creator_id, kind, file_key, content_type, thumb_key, thumb_blur_key,
-                        width, height, duration_seconds, size_bytes, original_name)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        width, height, duration_seconds, size_bytes, original_name, upload_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (upload_id) DO NOTHING
      RETURNING id`,
     [
       media.creatorId,
@@ -121,7 +123,16 @@ export function insertMedia(media) {
       media.duration,
       media.sizeBytes,
       media.originalName,
+      media.uploadId ?? null,
     ],
+  );
+}
+
+/** The saved file an upload turned into, if it finished. */
+export function findMediaByUpload(uploadId) {
+  return queryOne(
+    `SELECT m.id, c.slug AS creator_slug FROM media m JOIN creators c ON c.id = m.creator_id WHERE m.upload_id = $1`,
+    [uploadId],
   );
 }
 

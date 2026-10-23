@@ -77,6 +77,10 @@ CREATE TABLE IF NOT EXISTS media (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS media_creator_idx ON media (creator_id, created_at DESC);
+-- Which upload made each file, so a finished upload is still recognized
+-- after the server restarts, and the same upload can never be saved twice.
+ALTER TABLE media ADD COLUMN IF NOT EXISTS upload_id TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS media_upload_idx ON media (upload_id);
 
 -- One row per visitor per creator per day. This is what stops refreshes
 -- from inflating view counts, and it keeps a daily history for payouts.
