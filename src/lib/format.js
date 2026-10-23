@@ -92,3 +92,46 @@ export function initials(name) {
       .toUpperCase() || "?"
   );
 }
+
+export const TITLE_MAX = 120;
+
+// Words cameras and apps put in file names. A name made only of these and
+// numbers ("IMG_1234", "Screen Recording 2024-01-01 at 10.00.00") isn't a
+// title, so the video shows as "<creator> video" until you give it one.
+const FILE_NAME_NOISE = new Set(
+  "img image vid video mov mvi dsc dscn dcim pxl gopr gh screen recording screenrecording rpreplay record trim trimmed clip copy final edit edited untitled new file snapchat tiktok whatsapp signal telegram imovie capcut export at pm am".split(" "),
+);
+
+/** "my_trip-to vegas.MOV" -> "My trip to vegas". Null for camera-style names. */
+export function titleFromFileName(fileName) {
+  let text = String(fileName || "").replace(/\.[a-z0-9]{2,5}$/i, "");
+  text = text.replace(/[_.]+/g, " ").replace(/(\p{L})-(?=\p{L})/gu, "$1 ").replace(/\s+/g, " ").trim();
+  const meaningful = text
+    .toLowerCase()
+    .split(/[\s\-–—,()[\]{}!?]+/)
+    .filter((chunk) => !(/^[a-f0-9]{6,}$/.test(chunk) && /\d/.test(chunk))) // hex IDs
+    .map((chunk) => chunk.replace(/[^\p{L}]+/gu, ""))
+    .filter((word) => word.length >= 2 && !FILE_NAME_NOISE.has(word));
+  if (meaningful.join("").length < 3) return null;
+  return cleanTitle(text.charAt(0).toUpperCase() + text.slice(1));
+}
+
+/** A title as typed: trimmed, single spaces, at most TITLE_MAX characters. Empty -> null. */
+export function cleanTitle(value) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX).trim();
+  return text || null;
+}
+
+/** What a video or photo is called on the site when it has no title. */
+export function displayTitle(title, creatorName, kind) {
+  return title || `${creatorName} ${kind === "image" ? "photo" : "video"}`;
+}
+
+/** 95 seconds -> "PT1M35S" (the format search engines use for video length). */
+export function isoDuration(seconds) {
+  const total = Math.max(0, Math.round(Number(seconds) || 0));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `PT${h ? `${h}H` : ""}${m ? `${m}M` : ""}${s || (!h && !m) ? `${s}S` : ""}`;
+}

@@ -29,7 +29,7 @@ export async function GET(_request, { params }) {
       // database still knows if this upload made it onto the site.
       const saved = await findMediaByUpload(id);
       if (!saved) throw goneError();
-      return Response.json({ status: "done", error: null, gone: false, creatorSlug: saved.creator_slug });
+      return Response.json({ status: "done", error: null, gone: false, creatorSlug: saved.creator_slug, mediaId: Number(saved.id) });
     }
     return Response.json({
       status: meta.status,
@@ -38,6 +38,7 @@ export async function GET(_request, { params }) {
       received: meta.received,
       size: meta.size,
       creatorSlug: meta.creatorSlug ?? null,
+      mediaId: meta.mediaId ?? null,
       updatedAt: meta.updatedAt ?? meta.createdAt,
     });
   } catch (err) {

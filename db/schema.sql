@@ -81,6 +81,8 @@ CREATE INDEX IF NOT EXISTS media_creator_idx ON media (creator_id, created_at DE
 -- after the server restarts, and the same upload can never be saved twice.
 ALTER TABLE media ADD COLUMN IF NOT EXISTS upload_id TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS media_upload_idx ON media (upload_id);
+-- A title for search engines and visitors (from the file name, editable).
+ALTER TABLE media ADD COLUMN IF NOT EXISTS title TEXT;
 
 -- One row per visitor per creator per day. This is what stops refreshes
 -- from inflating view counts, and it keeps a daily history for payouts.

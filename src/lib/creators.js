@@ -95,7 +95,7 @@ export async function deleteCreator(id) {
 
 export function listMedia(creatorId) {
   return query(
-    `SELECT id, kind, file_key, content_type, thumb_key, thumb_blur_key, width, height,
+    `SELECT id, kind, title, file_key, content_type, thumb_key, thumb_blur_key, width, height,
             duration_seconds, created_at
        FROM media WHERE creator_id = $1
       ORDER BY created_at DESC, id DESC`,
@@ -107,8 +107,8 @@ export function listMedia(creatorId) {
 export function insertMedia(media) {
   return queryOne(
     `INSERT INTO media (creator_id, kind, file_key, content_type, thumb_key, thumb_blur_key,
-                        width, height, duration_seconds, size_bytes, original_name, upload_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                        width, height, duration_seconds, size_bytes, original_name, upload_id, title)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      ON CONFLICT (upload_id) DO NOTHING
      RETURNING id`,
     [
@@ -124,6 +124,7 @@ export function insertMedia(media) {
       media.sizeBytes,
       media.originalName,
       media.uploadId ?? null,
+      media.title ?? null,
     ],
   );
 }
@@ -137,6 +138,25 @@ export function getMediaWithCreator(id) {
        FROM media m JOIN creators c ON c.id = m.creator_id
       WHERE m.id = $1`,
     [Number(id)],
+  );
+}
+
+/** Renames a video or photo. Returns its creator's slug, or null if it's gone. */
+export async function setMediaTitle(id, title) {
+  const row = await queryOne(
+    `UPDATE media m SET title = $2 FROM creators c
+      WHERE m.id = $1 AND c.id = m.creator_id
+      RETURNING c.slug`,
+    [id, title],
+  );
+  return row?.slug ?? null;
+}
+
+/** Every video and photo with its creator's address, for the sitemap. */
+export function listMediaForSitemap() {
+  return query(
+    `SELECT m.id, m.created_at, c.slug FROM media m JOIN creators c ON c.id = m.creator_id
+      ORDER BY m.id DESC LIMIT 45000`,
   );
 }
 

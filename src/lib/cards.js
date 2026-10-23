@@ -24,6 +24,7 @@ export async function mediaItem(row, locked) {
   return {
     id: Number(row.id),
     kind: row.kind,
+    title: row.title ?? null,
     width: row.width,
     height: row.height,
     duration: row.duration_seconds,

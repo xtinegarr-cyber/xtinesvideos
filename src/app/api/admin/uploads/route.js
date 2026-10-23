@@ -38,6 +38,7 @@ export async function GET() {
       creatorId: m.creatorId,
       creatorName: m.creatorName || "",
       creatorSlug: m.creatorSlug ?? null,
+      mediaId: m.mediaId ?? null,
       status: m.status,
       error: m.error,
       gone: Boolean(m.gone),

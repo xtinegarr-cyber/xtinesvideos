@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteCreator, deleteMedia, setCreatorTier } from "@/lib/creators";
+import { deleteCreator, deleteMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
+import { cleanTitle } from "@/lib/format";
 import { createUser, deleteMember, findUserById } from "@/lib/members";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { validatePassword, validateUsername } from "@/lib/passwords";
@@ -81,4 +82,16 @@ export async function decideClaimAction(formData) {
   await requireAdmin();
   await decideClaim(idFrom(formData, "claimId"), formData.get("decision") === "approve");
   revalidatePath("/admin");
+}
+
+/** Gives a video or photo a title (empty clears it). */
+export async function setMediaTitleAction(_prev, formData) {
+  await requireAdmin();
+  const id = idFrom(formData, "mediaId");
+  const title = cleanTitle(formData.get("title"));
+  const slug = await setMediaTitle(id, title);
+  if (!slug) return { error: "That video was deleted." };
+  revalidatePath(`/${slug}`);
+  revalidatePath(`/${slug}/v/${id}`);
+  return { saved: true, title };
 }

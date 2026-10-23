@@ -126,7 +126,7 @@ function statusFromServer(u) {
         ? { status: "elsewhere", progress: u.size ? u.received / u.size : 0 }
         : { status: "interrupted" };
     case "done":
-      return { status: "done", creatorSlug: u.creatorSlug, note: null };
+      return { status: "done", creatorSlug: u.creatorSlug, mediaId: u.mediaId ?? null, note: null };
     case "failed":
       return { status: "failed", error: u.error || "Processing failed.", note: null };
     default:
@@ -168,6 +168,14 @@ function StatusLine({ row }) {
             </Link>
           ) : (
             `${row.creatorName}’s page`
+          )}
+          {row.creatorSlug && row.mediaId && (
+            <>
+              {" · "}
+              <Link href={`/${row.creatorSlug}/v/${row.mediaId}`} className="underline underline-offset-2">
+                Edit title
+              </Link>
+            </>
           )}
         </span>
       );

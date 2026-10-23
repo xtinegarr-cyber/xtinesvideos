@@ -4,12 +4,14 @@ import SiteHeader from "./SiteHeader";
 import ShareBox from "./ShareBox";
 import ViewTracker from "./ViewTracker";
 import { GetVipButton } from "./VipForms";
-import { formatDate, formatDuration } from "@/lib/format";
+import TitleEditor from "./TitleEditor";
+import { displayTitle, formatDate, formatDuration } from "@/lib/format";
 
-export default function VideoView({ viewer, isVip, creator, item, locked, trackView, rewardMinutes, priceLabel }) {
+export default function VideoView({ viewer, isVip, creator, item, locked, canEdit = false, trackView, rewardMinutes, priceLabel }) {
   const video = item.kind === "video";
   const path = `/${creator.slug}/v/${item.id}`;
   const free = creator.tier === "free";
+  const name = displayTitle(item.title, creator.name, item.kind);
 
   return (
     <>
@@ -50,15 +52,15 @@ export default function VideoView({ viewer, isVip, creator, item, locked, trackV
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-            <Link href={`/${creator.slug}`} className="hover:underline">
+        <div className="mt-4">
+          <h1 className="break-words text-2xl font-extrabold tracking-tight sm:text-3xl">{name}</h1>
+          <p className="mt-1 text-sm text-muted">
+            <Link href={`/${creator.slug}`} className="font-semibold text-fg hover:underline">
               {creator.name}
-            </Link>
-          </h1>
-          <p className="text-sm text-muted">
-            {video ? `Video${item.duration ? ` · ${formatDuration(item.duration)}` : ""}` : "Photo"} · {formatDate(item.createdAt)}
+            </Link>{" "}
+            · {video ? `Video${item.duration ? ` · ${formatDuration(item.duration)}` : ""}` : "Photo"} · {formatDate(item.createdAt)}
           </p>
+          {canEdit && <TitleEditor mediaId={item.id} title={item.title} placeholder={name} />}
         </div>
 
         {locked ? (
@@ -80,7 +82,7 @@ export default function VideoView({ viewer, isVip, creator, item, locked, trackV
           free && (
             <ShareBox
               path={path}
-              title={`${creator.name} ${video ? "video" : "photo"}`}
+              title={item.title ? `${item.title} - ${creator.name}` : name}
               minutes={rewardMinutes}
               showReward={!isVip}
             />

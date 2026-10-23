@@ -60,6 +60,20 @@ memberships are sold with Stripe for $4.99/month.
 - `/account`: members see their status. "Manage or cancel VIP" opens
   Stripe's page for changing their card or canceling.
 
+**Titles and search engines**
+- Uploads get a title from the file name ("beach_day-2.mp4" becomes "Beach
+  day 2"). Camera-style names like "IMG_1234" get no title and show as
+  "<creator> video". To rename, open the video's page while logged in as
+  admin (or **Edit title** in the upload list) and use the Title box.
+- Titles show under each tile, as the video page's heading, and in search
+  results: "Beach day 2 - Ava Monroe | XTINE’S VIDEOS".
+- Free videos tell search engines their title, thumbnail, length and date.
+  Every thumbnail has a permanent address (`/media/123/thumb`), so link
+  previews keep working. VIP creators' thumbnails there are blurred.
+- `/sitemap.xml` lists every creator and video page; `/robots.txt` keeps
+  admin, account and login pages out of search. Submit the sitemap in
+  Google Search Console.
+
 **Video pages and free VIP from Reddit**
 - Every video and photo has its own page: `/creator_name/v/123`. Open one
   from the creator's grid with **Share** (free creators) or **Open on its

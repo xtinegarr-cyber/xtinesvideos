@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FiExternalLink, FiFilm, FiImage, FiPlay, FiShare2, FiTrash2, FiX } from "react-icons/fi";
+import { FiEdit2, FiExternalLink, FiFilm, FiImage, FiPlay, FiShare2, FiTrash2, FiX } from "react-icons/fi";
 import { formatDuration } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
 
-function Viewer({ item, onClose, pageHref, shareable }) {
+function Viewer({ item, onClose, pageHref, shareable, canManage }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -46,8 +46,17 @@ function Viewer({ item, onClose, pageHref, shareable }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.url} alt="" className="max-h-[82dvh] max-w-full rounded-xl object-contain" />
         )}
+        {item.title && <p className="mt-3 text-center font-semibold text-white">{item.title}</p>}
         {pageHref && (
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {canManage && (
+              <Link
+                href={pageHref}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
+              >
+                <FiEdit2 aria-hidden /> Edit title
+              </Link>
+            )}
             <Link
               href={shareable ? `${pageHref}#share` : pageHref}
               className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
@@ -89,7 +98,7 @@ function Tile({ item, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen(item)}
-      aria-label={video ? "Play video" : "Open photo"}
+      aria-label={`${video ? "Play video" : "Open photo"}${item.title ? `: ${item.title}` : ""}`}
       className={`relative block w-full overflow-hidden rounded-xl bg-panel ring-1 ring-line hover:ring-muted ${
         video ? "aspect-video" : "aspect-[3/4]"
       }`}
@@ -202,6 +211,9 @@ export default function MediaGrid({ items, canManage, initialTab = "videos", cre
               <li key={item.id} className="relative">
                 <Tile item={item} onOpen={setOpen} />
                 {canManage && <DeleteButton id={item.id} />}
+                {item.title && (
+                  <p className="mt-1.5 line-clamp-2 px-0.5 text-sm font-semibold leading-snug text-fg/90">{item.title}</p>
+                )}
               </li>
             ))}
           </ul>
@@ -213,6 +225,7 @@ export default function MediaGrid({ items, canManage, initialTab = "videos", cre
           onClose={() => setOpen(null)}
           pageHref={creatorSlug ? `/${creatorSlug}/v/${open.id}` : null}
           shareable={shareable}
+          canManage={canManage}
         />
       )}
     </>
