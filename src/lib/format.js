@@ -122,9 +122,10 @@ export function cleanTitle(value) {
   return text || null;
 }
 
-/** What a video or photo is called on the site when it has no title. */
+/** What a video is called on the site ("<creator> video" until it has a title). Photos have no titles. */
 export function displayTitle(title, creatorName, kind) {
-  return title || `${creatorName} ${kind === "image" ? "photo" : "video"}`;
+  if (kind === "image") return `${creatorName} photo`;
+  return title || `${creatorName} video`;
 }
 
 /** 95 seconds -> "PT1M35S" (the format search engines use for video length). */

@@ -61,12 +61,11 @@ memberships are sold with Stripe for $4.99/month.
   Stripe's page for changing their card or canceling.
 
 **Titles and search engines**
-- Uploads get a title from the file name ("beach_day-2.mp4" becomes "Beach
-  day 2"). Camera-style names like "IMG_1234" get no title and show as
-  "<creator> video". To rename, open the video's page while logged in as
-  admin (or **Edit title** in the upload list) and use the Title box.
-- Titles show under each tile, as the video page's heading, and in search
-  results: "Beach day 2 - Ava Monroe | XTINE’S VIDEOS".
+- Videos are called "<creator> video" until you name them. To name one,
+  open its page while logged in as admin (or **Edit title** in the upload
+  list) and use the Title box. Photos don't have titles.
+- Titles show under each video tile, as the video page's heading, and in
+  search results: "Beach day 2 - Ava Monroe | XTINE’S VIDEOS".
 - Free videos tell search engines their title, thumbnail, length and date.
   Every thumbnail has a permanent address (`/media/123/thumb`), so link
   previews keep working. VIP creators' thumbnails there are blurred.

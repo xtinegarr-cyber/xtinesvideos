@@ -62,30 +62,32 @@ try {
   await client.query(schema);
   console.log("Database tables are ready.");
 
-  // Once: videos uploaded before titles existed get one from the file name
-  // they were uploaded with (the same rule new uploads use). Runs only once,
-  // so titles you remove later stay removed.
-  const titlesDone = await client.query("SELECT 1 FROM app_settings WHERE key = 'titles_from_file_names'");
-  if (!titlesDone.rows.length) {
+  // Once: undo the automatic titles made from file names (many were just
+  // numbers). Videos go back to "<creator> video" to be named by hand, and
+  // photos lose their titles (photos don't have titles). Titles typed in by
+  // hand since then are kept: only titles that still match what the file
+  // name would give are cleared.
+  const resetDone = await client.query("SELECT 1 FROM app_settings WHERE key = 'titles_reset_to_default'");
+  if (!resetDone.rows.length) {
     try {
       const { titleFromFileName } = await import(new URL("../src/lib/format.js", import.meta.url));
+      const photos = (await client.query("UPDATE media SET title = NULL WHERE kind = 'image' AND title IS NOT NULL RETURNING id")).rows.length;
       const { rows } = await client.query(
-        "SELECT id, original_name FROM media WHERE title IS NULL AND original_name IS NOT NULL",
+        "SELECT id, title, original_name FROM media WHERE kind = 'video' AND title IS NOT NULL",
       );
-      let named = 0;
+      let cleared = 0;
       for (const row of rows) {
-        const title = titleFromFileName(row.original_name);
-        if (!title) continue;
-        await client.query("UPDATE media SET title = $1 WHERE id = $2 AND title IS NULL", [title, row.id]);
-        named++;
+        if (titleFromFileName(row.original_name) !== row.title) continue; // named by hand: keep
+        await client.query("UPDATE media SET title = NULL WHERE id = $1", [row.id]);
+        cleared++;
       }
       await client.query(
-        "INSERT INTO app_settings (key, value) VALUES ('titles_from_file_names', $1) ON CONFLICT (key) DO NOTHING",
-        [`${named} of ${rows.length}`],
+        "INSERT INTO app_settings (key, value) VALUES ('titles_reset_to_default', $1) ON CONFLICT (key) DO NOTHING",
+        [`${cleared} videos, ${photos} photos`],
       );
-      console.log(`Titled ${named} of ${rows.length} earlier uploads from their file names.`);
+      console.log(`Cleared automatic titles: ${cleared} videos back to the default, ${photos} photo titles removed.`);
     } catch (err) {
-      console.warn("Couldn't add titles from file names (will try again next start):", err.message);
+      console.warn("Couldn't clear automatic titles (will try again next start):", err.message);
     }
   }
 

@@ -59,7 +59,7 @@ export default function VideoView({ viewer, isVip, creator, item, more = [], loc
             </Link>{" "}
             · {video ? `Video${item.duration ? ` · ${formatDuration(item.duration)}` : ""}` : "Photo"} · {formatDate(item.createdAt)}
           </p>
-          {canEdit && <TitleEditor mediaId={item.id} title={item.title} placeholder={name} />}
+          {canEdit && video && <TitleEditor mediaId={item.id} title={item.title} placeholder={name} />}
         </div>
 
         {locked ? (

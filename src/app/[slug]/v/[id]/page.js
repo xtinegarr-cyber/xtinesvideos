@@ -16,9 +16,12 @@ async function find(id) {
   return /^\d{1,15}$/.test(String(id)) ? getMediaWithCreator(Number(id)) : null;
 }
 
+// Only videos have titles.
+const titleOf = (media) => (media.kind === "video" ? media.title : null);
+
 function describe(media) {
   const what = media.kind === "video" ? "video" : "photo";
-  const named = media.title ? `“${media.title}”, a ${what} from ${media.creator_name}` : `this ${what} from ${media.creator_name}`;
+  const named = titleOf(media) ? `“${titleOf(media)}”, a ${what} from ${media.creator_name}` : `this ${what} from ${media.creator_name}`;
   return media.creator_tier === "free"
     ? `Watch ${named}, free on ${SITE_NAME}.`
     : `${media.creator_name} is a VIP creator. Get VIP to see ${named} on ${SITE_NAME}.`;
@@ -28,9 +31,9 @@ export async function generateMetadata({ params }) {
   const { id } = await params;
   const media = await find(id);
   if (!media) return { title: `Not found | ${SITE_NAME}` };
-  const name = displayTitle(media.title, media.creator_name, media.kind);
+  const name = displayTitle(titleOf(media), media.creator_name, media.kind);
   // "Beach day - Ava Monroe | XTINE’S VIDEOS"
-  const title = media.title ? `${name} - ${media.creator_name} | ${SITE_NAME}` : `${name} | ${SITE_NAME}`;
+  const title = titleOf(media) ? `${name} - ${media.creator_name} | ${SITE_NAME}` : `${name} | ${SITE_NAME}`;
   const description = describe(media);
   const path = `/${media.creator_slug}/v/${media.id}`;
   // A permanent thumbnail address, so link previews never break. VIP ones are blurred.
@@ -79,7 +82,7 @@ export default async function MediaPage({ params }) {
     schema = {
       "@context": "https://schema.org",
       "@type": "VideoObject",
-      name: displayTitle(media.title, media.creator_name, media.kind),
+      name: displayTitle(titleOf(media), media.creator_name, media.kind),
       description: describe(media),
       thumbnailUrl: [`${site}/media/${media.id}/thumb`],
       uploadDate: new Date(media.created_at).toISOString(),

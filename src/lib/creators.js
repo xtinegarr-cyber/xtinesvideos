@@ -141,11 +141,11 @@ export function getMediaWithCreator(id) {
   );
 }
 
-/** Renames a video or photo. Returns its creator's slug, or null if it's gone. */
+/** Renames a video (photos have no titles). Returns its creator's slug, or null if it's gone. */
 export async function setMediaTitle(id, title) {
   const row = await queryOne(
     `UPDATE media m SET title = $2 FROM creators c
-      WHERE m.id = $1 AND c.id = m.creator_id
+      WHERE m.id = $1 AND c.id = m.creator_id AND m.kind = 'video'
       RETURNING c.slug`,
     [id, title],
   );

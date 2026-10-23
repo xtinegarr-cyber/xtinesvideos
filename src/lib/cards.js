@@ -24,7 +24,7 @@ export async function mediaItem(row, locked) {
   return {
     id: Number(row.id),
     kind: row.kind,
-    title: row.title ?? null,
+    title: row.kind === "video" ? (row.title ?? null) : null, // photos don't have titles
     width: row.width,
     height: row.height,
     duration: row.duration_seconds,
