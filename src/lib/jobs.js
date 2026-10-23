@@ -2,6 +2,7 @@
 // panel never waits on ffmpeg (and Cloudflare's 100-second timeout never
 // cuts off a long conversion).
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { findMediaByUpload, getCreatorById, insertMedia } from "./creators";
@@ -11,7 +12,11 @@ import { listUploads, readUpload, saveUpload, uploadDir, uploadFilePath } from "
 
 const queue =
   globalThis.__xvJobs ?? (globalThis.__xvJobs = { running: 0, waiting: [], active: new Set(), resumed: null });
-const CONCURRENCY = Math.max(1, Number(process.env.PROCESSING_CONCURRENCY) || 1);
+// Files processed at the same time. By default one per 3 CPU cores (2 on a
+// 6-core server): ffmpeg already uses several cores per file, and running
+// two lets quick files (photos, repackaged videos) finish alongside a long
+// conversion instead of waiting behind it.
+const CONCURRENCY = Math.max(1, Number(process.env.PROCESSING_CONCURRENCY) || Math.floor(os.availableParallelism() / 3));
 
 export function enqueueUpload(id) {
   if (queue.active.has(id)) return;

@@ -66,8 +66,10 @@ memberships are sold with Stripe for $4.99/month.
 2. ffmpeg moves the video's index to the start of the file ("faststart"),
    so playback begins before the download finishes.
 3. Videos that would load slowly are converted to 1080p H.264 with a
-   bitrate cap. That covers iPhone HEVC, 4K, very high bitrates, WebM and AVI.
-   Light H.264 files are only repackaged, which takes seconds.
+   bitrate cap. That covers iPhone HEVC, 4K, very high bitrates (over
+   20 Mbps), WebM and AVI. Normal H.264 files are only repackaged, which
+   takes a second or two. Two files are processed at a time on a 6-core
+   server (`PROCESSING_CONCURRENCY` changes this).
 4. A thumbnail is taken from 15 seconds in (or the middle of shorter
    clips), along with a blurred copy for locked VIP previews.
 5. Everything goes to R2, and the server deletes its temporary copy.
@@ -89,6 +91,9 @@ can share or guess a working link to locked content.
    Coolify's Environment Variables tab and fill it in. `DATABASE_URL` is
    the URL from step 2.
 5. **Domain:** add your domain in Coolify. Coolify sets up HTTPS for you.
+   **Upload folder:** under Persistent Storage, add a volume mounted at
+   `/data/uploads` and set `UPLOAD_TMP_DIR=/data/uploads`, so files waiting
+   to be processed survive a redeploy.
 6. **Deploy.** On first start the site creates its database tables and the
    `xtinegar` admin account using `ADMIN_PASSWORD`. Log in at `/login`.
    To change the admin password later, change `ADMIN_PASSWORD` and restart.
