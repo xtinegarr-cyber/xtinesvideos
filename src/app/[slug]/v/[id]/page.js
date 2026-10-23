@@ -2,7 +2,7 @@
 // Free creators' videos can be shared from here (for free VIP on Reddit).
 import { notFound, permanentRedirect } from "next/navigation";
 import VideoView from "@/components/VideoView";
-import { getMediaWithCreator } from "@/lib/creators";
+import { getMediaWithCreator, listMedia } from "@/lib/creators";
 import { mediaItem } from "@/lib/cards";
 import { displayTitle, isoDuration } from "@/lib/format";
 import { getAccess, siteUrl } from "@/lib/session";
@@ -62,6 +62,15 @@ export default async function MediaPage({ params }) {
   const locked = media.creator_tier === "vip" && !access.isVip;
   const item = await mediaItem(media, locked);
   const free = media.creator_tier === "free";
+  // A few more of the same kind (videos after a video), newest first.
+  const more = locked
+    ? []
+    : await Promise.all(
+        (await listMedia(media.creator_id))
+          .filter((m) => Number(m.id) !== Number(media.id) && m.kind === media.kind)
+          .slice(0, 6)
+          .map((m) => mediaItem(m, false)),
+      );
 
   // Tells search engines about free videos (title, thumbnail, length, date).
   let schema = null;
@@ -89,6 +98,7 @@ export default async function MediaPage({ params }) {
         isVip={access.isVip}
         creator={{ slug: media.creator_slug, name: media.creator_name, tier: media.creator_tier }}
         item={{ ...item, createdAt: new Date(media.created_at).toISOString() }}
+        more={more}
         locked={locked}
         canEdit={Boolean(access.viewer?.isAdmin)}
         trackView={!access.viewer?.isAdmin}

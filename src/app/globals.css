@@ -98,3 +98,89 @@ body {
     transform: translateY(12px) scale(0.98);
   }
 }
+
+/* Video player sliders: a thin track, gold for what's played, lighter for
+   what's loaded, and a gold knob that appears on hover or while dragging. */
+@layer components {
+.xv-range {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  --fill: 0%;
+  --buffer: 0%;
+}
+.xv-range:focus {
+  outline: none;
+}
+.xv-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-gold) var(--fill),
+    rgb(255 255 255 / 0.38) var(--fill) var(--buffer),
+    rgb(255 255 255 / 0.16) var(--buffer)
+  );
+}
+.xv-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-gold) var(--fill),
+    rgb(255 255 255 / 0.38) var(--fill) var(--buffer),
+    rgb(255 255 255 / 0.16) var(--buffer)
+  );
+}
+.xv-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-gold);
+  box-shadow: 0 0 0 4px rgb(231 203 152 / 0.25);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+.xv-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-gold);
+  box-shadow: 0 0 0 4px rgb(231 203 152 / 0.25);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+.xv-player:hover .xv-range::-webkit-slider-thumb,
+.xv-range:active::-webkit-slider-thumb,
+.xv-range:focus-visible::-webkit-slider-thumb,
+.xv-range-small::-webkit-slider-thumb {
+  transform: scale(1);
+}
+.xv-player:hover .xv-range::-moz-range-thumb,
+.xv-range:active::-moz-range-thumb,
+.xv-range:focus-visible::-moz-range-thumb,
+.xv-range-small::-moz-range-thumb {
+  transform: scale(1);
+}
+.xv-range-small::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  box-shadow: none;
+}
+.xv-range-small::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  box-shadow: none;
+}
+}

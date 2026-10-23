@@ -110,7 +110,7 @@ export default function CreatorView({ viewer, creator, items, counts, canManage,
           <VipGate creator={creator} counts={counts} viewer={viewer} priceLabel={priceLabel} />
         ) : (
           <div className="mt-8">
-            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} creatorSlug={creator.slug} shareable={!vip} />
+            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} creatorSlug={creator.slug} />
           </div>
         )}
       </main>

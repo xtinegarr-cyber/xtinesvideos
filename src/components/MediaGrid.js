@@ -1,75 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { FiEdit2, FiExternalLink, FiFilm, FiImage, FiPlay, FiShare2, FiTrash2, FiX } from "react-icons/fi";
+import { FiFilm, FiImage, FiPlay, FiTrash2 } from "react-icons/fi";
 import { formatDuration } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
-
-function Viewer({ item, onClose, pageHref, shareable, canManage }) {
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflow;
-    };
-  }, [onClose]);
-
-  return (
-    <div role="dialog" aria-modal="true" aria-label={item.kind === "video" ? "Video" : "Photo"} className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3 sm:p-8">
-      <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close"
-        className="absolute right-3 top-3 z-10 grid size-11 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
-      >
-        <FiX aria-hidden className="size-6" />
-      </button>
-      <div className="relative max-h-full max-w-full">
-        {item.kind === "video" ? (
-          // preload="metadata" + a poster shows the picture instantly and
-          // starts streaming only when played; faststart files begin quickly.
-          <video
-            src={item.url}
-            poster={item.thumbUrl}
-            controls
-            autoPlay
-            playsInline
-            preload="metadata"
-            className="max-h-[82dvh] max-w-full rounded-xl bg-black"
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.url} alt="" className="max-h-[82dvh] max-w-full rounded-xl object-contain" />
-        )}
-        {item.title && <p className="mt-3 text-center font-semibold text-white">{item.title}</p>}
-        {pageHref && (
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
-            {canManage && (
-              <Link
-                href={pageHref}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
-              >
-                <FiEdit2 aria-hidden /> Edit title
-              </Link>
-            )}
-            <Link
-              href={shareable ? `${pageHref}#share` : pageHref}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
-            >
-              {shareable ? <FiShare2 aria-hidden /> : <FiExternalLink aria-hidden />}
-              {shareable ? "Share" : "Open on its own page"}
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function Thumb({ item }) {
   if (!item.thumbUrl) return <div className="absolute inset-0 bg-raised" />;
@@ -92,12 +27,12 @@ function Thumb({ item }) {
   );
 }
 
-function Tile({ item, onOpen }) {
+/** One upload in a grid. Opens its own page (player, title, Share). */
+export function MediaTile({ item, href }) {
   const video = item.kind === "video";
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(item)}
+    <Link
+      href={href}
       aria-label={`${video ? "Play video" : "Open photo"}${item.title ? `: ${item.title}` : ""}`}
       className={`relative block w-full overflow-hidden rounded-xl bg-panel ring-1 ring-line hover:ring-muted ${
         video ? "aspect-video" : "aspect-[3/4]"
@@ -116,7 +51,7 @@ function Tile({ item, onOpen }) {
           </span>
         </>
       )}
-    </button>
+    </Link>
   );
 }
 
@@ -150,8 +85,7 @@ const TABS = [
  * A creator's uploads, split into Videos and Photos tabs. Videos is
  * selected unless the link says ?tab=photos.
  */
-export default function MediaGrid({ items, canManage, initialTab = "videos", creatorSlug, shareable = false }) {
-  const [open, setOpen] = useState(null);
+export default function MediaGrid({ items, canManage, initialTab = "videos", creatorSlug }) {
   const [tab, setTab] = useState(initialTab === "photos" ? "photos" : "videos");
 
   function choose(id) {
@@ -209,7 +143,7 @@ export default function MediaGrid({ items, canManage, initialTab = "videos", cre
           >
             {shown.map((item) => (
               <li key={item.id} className="relative">
-                <Tile item={item} onOpen={setOpen} />
+                <MediaTile item={item} href={`/${creatorSlug}/v/${item.id}`} />
                 {canManage && <DeleteButton id={item.id} />}
                 {item.title && (
                   <p className="mt-1.5 line-clamp-2 px-0.5 text-sm font-semibold leading-snug text-fg/90">{item.title}</p>
@@ -219,15 +153,6 @@ export default function MediaGrid({ items, canManage, initialTab = "videos", cre
           </ul>
         )}
       </div>
-      {open && (
-        <Viewer
-          item={open}
-          onClose={() => setOpen(null)}
-          pageHref={creatorSlug ? `/${creatorSlug}/v/${open.id}` : null}
-          shareable={shareable}
-          canManage={canManage}
-        />
-      )}
     </>
   );
 }

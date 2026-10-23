@@ -2,12 +2,14 @@ import Link from "next/link";
 import { FiArrowLeft, FiGift, FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import ShareBox from "./ShareBox";
+import VideoPlayer from "./VideoPlayer";
+import { MediaTile } from "./MediaGrid";
 import ViewTracker from "./ViewTracker";
 import { GetVipButton } from "./VipForms";
 import TitleEditor from "./TitleEditor";
 import { displayTitle, formatDate, formatDuration } from "@/lib/format";
 
-export default function VideoView({ viewer, isVip, creator, item, locked, canEdit = false, trackView, rewardMinutes, priceLabel }) {
+export default function VideoView({ viewer, isVip, creator, item, more = [], locked, canEdit = false, trackView, rewardMinutes, priceLabel }) {
   const video = item.kind === "video";
   const path = `/${creator.slug}/v/${item.id}`;
   const free = creator.tier === "free";
@@ -22,7 +24,11 @@ export default function VideoView({ viewer, isVip, creator, item, locked, canEdi
           <FiArrowLeft aria-hidden /> {creator.name}
         </Link>
 
-        <div className="relative mt-4 grid place-items-center overflow-hidden rounded-2xl bg-black ring-1 ring-line">
+        <div
+          className={`relative mt-4 grid place-items-center overflow-hidden ${
+            video && !locked ? "" : "rounded-2xl bg-black ring-1 ring-line"
+          }`}
+        >
           {locked ? (
             <>
               {item.thumbUrl ? (
@@ -38,14 +44,7 @@ export default function VideoView({ viewer, isVip, creator, item, locked, canEdi
               </span>
             </>
           ) : video ? (
-            <video
-              src={item.url}
-              poster={item.thumbUrl}
-              controls
-              playsInline
-              preload="metadata"
-              className="max-h-[75dvh] w-full bg-black object-contain"
-            />
+            <VideoPlayer src={item.url} poster={item.thumbUrl} label={name} />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.url} alt="" className="max-h-[80dvh] w-auto max-w-full object-contain" />
@@ -87,6 +86,26 @@ export default function VideoView({ viewer, isVip, creator, item, locked, canEdi
               showReward={!isVip}
             />
           )
+        )}
+        {more.length > 0 && (
+          <section aria-labelledby="more-heading" className="mt-12">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 id="more-heading" className="text-xl font-extrabold">
+                More from {creator.name}
+              </h2>
+              <Link href={`/${creator.slug}`} className="text-sm font-semibold text-muted hover:text-fg">
+                See all
+              </Link>
+            </div>
+            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              {more.map((m) => (
+                <li key={m.id}>
+                  <MediaTile item={m} href={`/${creator.slug}/v/${m.id}`} />
+                  {m.title && <p className="mt-1.5 line-clamp-2 px-0.5 text-sm font-semibold leading-snug text-fg/90">{m.title}</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </main>
     </>
