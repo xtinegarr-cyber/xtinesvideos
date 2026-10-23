@@ -144,7 +144,10 @@ export function getMediaWithCreator(id) {
 /** Renames a video (photos have no titles). Returns its creator's slug, or null if it's gone. */
 export async function setMediaTitle(id, title) {
   const row = await queryOne(
-    `UPDATE media m SET title = $2 FROM creators c
+    `UPDATE media m
+        SET title = $2,
+            updated_at = CASE WHEN m.title IS DISTINCT FROM $2 THEN now() ELSE m.updated_at END
+       FROM creators c
       WHERE m.id = $1 AND c.id = m.creator_id AND m.kind = 'video'
       RETURNING c.slug`,
     [id, title],
@@ -152,10 +155,12 @@ export async function setMediaTitle(id, title) {
   return row?.slug ?? null;
 }
 
-/** Every video and photo with its creator's address, for the sitemap. */
+/** Every video and photo with its creator, for the sitemap. */
 export function listMediaForSitemap() {
   return query(
-    `SELECT m.id, m.created_at, c.slug FROM media m JOIN creators c ON c.id = m.creator_id
+    `SELECT m.id, m.kind, m.title, m.duration_seconds, m.created_at, m.updated_at,
+            c.slug AS creator_slug, c.name AS creator_name, c.tier AS creator_tier
+       FROM media m JOIN creators c ON c.id = m.creator_id
       ORDER BY m.id DESC LIMIT 45000`,
   );
 }

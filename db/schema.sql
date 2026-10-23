@@ -83,6 +83,11 @@ ALTER TABLE media ADD COLUMN IF NOT EXISTS upload_id TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS media_upload_idx ON media (upload_id);
 -- A title for search engines and visitors (from the file name, editable).
 ALTER TABLE media ADD COLUMN IF NOT EXISTS title TEXT;
+-- When the title last changed, so the sitemap can tell search engines to
+-- look at the page again. Titles given before this was added count as
+-- changed when it was added.
+ALTER TABLE media ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
+UPDATE media SET updated_at = now() WHERE updated_at IS NULL AND title IS NOT NULL;
 
 -- One row per visitor per creator per day. This is what stops refreshes
 -- from inflating view counts, and it keeps a daily history for payouts.

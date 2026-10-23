@@ -5,6 +5,7 @@ import VideoView from "@/components/VideoView";
 import { getMediaWithCreator, listMedia } from "@/lib/creators";
 import { mediaItem } from "@/lib/cards";
 import { displayTitle, isoDuration } from "@/lib/format";
+import { mediaDescription as describe, titleOf } from "@/lib/seo";
 import { getAccess, siteUrl } from "@/lib/session";
 import { SITE_NAME } from "@/lib/site";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
@@ -14,17 +15,6 @@ export const dynamic = "force-dynamic";
 
 async function find(id) {
   return /^\d{1,15}$/.test(String(id)) ? getMediaWithCreator(Number(id)) : null;
-}
-
-// Only videos have titles.
-const titleOf = (media) => (media.kind === "video" ? media.title : null);
-
-function describe(media) {
-  const what = media.kind === "video" ? "video" : "photo";
-  const named = titleOf(media) ? `“${titleOf(media)}”, a ${what} from ${media.creator_name}` : `this ${what} from ${media.creator_name}`;
-  return media.creator_tier === "free"
-    ? `Watch ${named}, free on ${SITE_NAME}.`
-    : `${media.creator_name} is a VIP creator. Get VIP to see ${named} on ${SITE_NAME}.`;
 }
 
 export async function generateMetadata({ params }) {
@@ -85,6 +75,8 @@ export default async function MediaPage({ params }) {
       name: displayTitle(titleOf(media), media.creator_name, media.kind),
       description: describe(media),
       thumbnailUrl: [`${site}/media/${media.id}/thumb`],
+      // A permanent link to the file itself (the player's link expires).
+      contentUrl: `${site}/media/${media.id}/video`,
       uploadDate: new Date(media.created_at).toISOString(),
       duration: media.duration_seconds ? isoDuration(media.duration_seconds) : undefined,
       author: { "@type": "Person", name: media.creator_name, url: `${site}/${media.creator_slug}` },
