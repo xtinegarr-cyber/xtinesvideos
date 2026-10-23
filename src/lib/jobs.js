@@ -102,14 +102,18 @@ async function processUpload(id) {
       kind === "video" ? await processVideo(input, workDir) : await processImage(input, workDir, meta.fileName);
 
     const base = `media/${creator.id}/${randomUUID()}`;
+    const file = `${base}/${kind}${result.main.ext}`;
     const keys = {
-      file: `${base}/${kind}${result.main.ext}`,
-      thumb: `${base}/thumb.jpg`,
+      file,
+      // Small photos are their own thumbnail.
+      thumb: result.thumb ? `${base}/thumb.jpg` : file,
       thumbBlur: `${base}/thumb-blur.jpg`,
     };
-    await uploadFile(keys.file, result.main.path, result.main.contentType);
-    await uploadFile(keys.thumb, result.thumb, "image/jpeg");
-    await uploadFile(keys.thumbBlur, result.thumbBlur, "image/jpeg");
+    await Promise.all([
+      uploadFile(keys.file, result.main.path, result.main.contentType),
+      result.thumb && uploadFile(keys.thumb, result.thumb, "image/jpeg"),
+      uploadFile(keys.thumbBlur, result.thumbBlur, "image/jpeg"),
+    ]);
 
     const { size } = await fs.stat(result.main.path);
     let row = await insertMedia({
