@@ -102,12 +102,13 @@ export async function fetchPost(postId) {
 }
 
 /**
- * Links in a post to one of the site's video pages (/creator/v/123?r=code).
+ * Links in a post to one of the site's video pages (/creator/123-title?r=code,
+ * or the older /creator/v/123?r=code).
  * Returns [{ slug, mediaId, code }].
  */
 export function findSiteLinks(post, siteHost) {
   const host = siteHost.toLowerCase().replace(/^www\./, "").replace(/\./g, "\\.");
-  const pattern = new RegExp(`https?://(?:www\\.)?${host}/([a-z0-9_]{1,64})/v/(\\d+)(?:/)?(\\?[^\\s)\\]>"']*)?`, "gi");
+  const pattern = new RegExp(`https?://(?:www\\.)?${host}/([a-z0-9_]{1,64})/(?:v/)?(\\d+)(?:-[a-z0-9-]*)?(?:/)?(\\?[^\\s)\\]>"']*)?`, "gi");
   const text = [post.url, post.url_overridden_by_dest, post.selftext, post.title].filter(Boolean).join("\n");
   const found = [];
   for (const match of text.matchAll(pattern)) {

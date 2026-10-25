@@ -162,6 +162,37 @@ export function cleanTitle(value) {
   return text || null;
 }
 
+/** "Gamer Plays Minecraft! (With Glasses)" -> "gamer-plays-minecraft-with-glasses" for links. */
+export function titleSlug(title) {
+  const slug = String(title ?? "")
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "") // "Mía" -> "mia"
+    .toLowerCase()
+    .replace(/['’]/g, "") // "Ava's" -> "avas", not "ava-s"
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (slug.length <= 70) return slug;
+  // Long titles are cut at a word, so links stay readable.
+  const cut = slug.slice(0, 71);
+  return cut.slice(0, cut.lastIndexOf("-") > 30 ? cut.lastIndexOf("-") : 70).replace(/-+$/, "");
+}
+
+/**
+ * A video's or photo's page: /ava/12-gamer-plays-minecraft, or /ava/12
+ * without a title. The number is what finds it, so a rename never breaks
+ * a link: other wording redirects to the current one.
+ */
+export function mediaPath(creatorSlug, media) {
+  const words = media.kind === "video" ? titleSlug(media.title) : "";
+  return `/${creatorSlug}/${Number(media.id)}${words ? `-${words}` : ""}`;
+}
+
+/** The number from the last part of a page's link ("12-gamer-plays" -> 12), or null. */
+export function mediaIdFromParam(value) {
+  const match = /^(\d{1,15})(?:-[a-z0-9-]*)?$/i.exec(String(value ?? ""));
+  return match ? Number(match[1]) : null;
+}
+
 /** What a video is called on the site ("<creator> video" until it has a title). Photos have no titles. */
 export function displayTitle(title, creatorName, kind) {
   if (kind === "image") return `${creatorName} photo`;

@@ -76,9 +76,12 @@ memberships are sold with Stripe for $4.99/month.
   Google Search Console.
 
 **Video pages and free VIP from Reddit**
-- Every video and photo has its own page: `/creator_name/v/123`. Open one
-  from the creator's grid with **Share** (free creators) or **Open on its
-  own page** (VIP creators, who stay locked for everyone without VIP).
+- Every video and photo has its own page, opened by clicking it in the
+  creator's grid: `/creator_name/123-video-title` (just `/creator_name/123`
+  without a title). The number finds the video, so renaming never breaks a
+  link: older wording, and the old `/creator_name/v/123` links, redirect
+  permanently to the current address. VIP creators' pages stay locked for
+  everyone without VIP.
 - Free creators' video pages have a **Share** box with a personal link
   (`?r=code`, unique to that browser) and a **Post on Reddit** button.
 - At `/vip/reddit`, visitors paste their Reddit post. The site checks that

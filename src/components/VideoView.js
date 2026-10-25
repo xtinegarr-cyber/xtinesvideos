@@ -7,11 +7,11 @@ import { MediaTile } from "./MediaGrid";
 import ViewTracker from "./ViewTracker";
 import { GetVipButton } from "./VipForms";
 import TitleEditor from "./TitleEditor";
-import { displayTitle, formatDate, formatDuration } from "@/lib/format";
+import { displayTitle, formatDate, formatDuration, mediaPath } from "@/lib/format";
 
 export default function VideoView({ viewer, isVip, creator, item, more = [], locked, canEdit = false, trackView, rewardMinutes, priceLabel }) {
   const video = item.kind === "video";
-  const path = `/${creator.slug}/v/${item.id}`;
+  const path = mediaPath(creator.slug, item);
   const free = creator.tier === "free";
   const name = displayTitle(item.title, creator.name, item.kind);
 
@@ -100,7 +100,7 @@ export default function VideoView({ viewer, isVip, creator, item, more = [], loc
             <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {more.map((m) => (
                 <li key={m.id}>
-                  <MediaTile item={m} href={`/${creator.slug}/v/${m.id}`} />
+                  <MediaTile item={m} href={mediaPath(creator.slug, m)} />
                   {m.title && <p className="mt-1.5 line-clamp-2 px-0.5 text-sm font-semibold leading-snug text-fg/90">{m.title}</p>}
                 </li>
               ))}

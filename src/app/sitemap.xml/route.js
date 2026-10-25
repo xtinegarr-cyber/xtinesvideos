@@ -5,7 +5,7 @@
 // changed: a video when it's uploaded or renamed, a creator's page when
 // one of their videos is.
 import { listCreators, listMediaForSitemap } from "@/lib/creators";
-import { displayTitle } from "@/lib/format";
+import { displayTitle, mediaPath } from "@/lib/format";
 import { mediaDescription, titleOf } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export async function GET() {
     creatorChanged.set(m.creator_slug, later(creatorChanged.get(m.creator_slug), changed));
     siteChanged = later(siteChanged, changed);
     const extra = m.kind === "video" && m.creator_tier === "free" ? video(site, m) : "";
-    return `<url><loc>${esc(`${site}/${m.creator_slug}/v/${m.id}`)}</loc>${stamp(changed)}${extra}</url>`;
+    return `<url><loc>${esc(`${site}${mediaPath(m.creator_slug, m)}`)}</loc>${stamp(changed)}${extra}</url>`;
   });
 
   const xml = [

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { FiFilm, FiImage, FiPlay, FiTrash2 } from "react-icons/fi";
-import { formatDuration } from "@/lib/format";
+import { formatDuration, mediaPath } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
 
 function Thumb({ item }) {
@@ -150,7 +150,7 @@ export default function MediaGrid({ items, canManage, initialTab = "videos", cre
           >
             {shown.map((item) => (
               <li key={item.id} className="relative">
-                <MediaTile item={item} href={`/${creatorSlug}/v/${item.id}`} />
+                <MediaTile item={item} href={mediaPath(creatorSlug, item)} />
                 {canManage && <DeleteButton id={item.id} />}
                 {item.title && (
                   <p className="mt-1.5 line-clamp-2 px-0.5 text-sm font-semibold leading-snug text-fg/90">{item.title}</p>

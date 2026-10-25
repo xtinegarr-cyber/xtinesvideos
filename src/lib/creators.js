@@ -129,7 +129,7 @@ export function insertMedia(media) {
   );
 }
 
-/** One upload with its creator, for its own page (/creator/v/123). */
+/** One upload with its creator, for its own page (/creator/123-title). */
 export function getMediaWithCreator(id) {
   if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) return null;
   return queryOne(

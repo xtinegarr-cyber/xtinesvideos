@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { deleteCreator, deleteMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
-import { cleanTitle, endOfDay } from "@/lib/format";
+import { cleanTitle, endOfDay, mediaPath } from "@/lib/format";
 import { createUser, deleteMember, findUserById } from "@/lib/members";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { validatePassword, validateUsername } from "@/lib/passwords";
@@ -97,7 +97,8 @@ export async function setMediaTitleAction(_prev, formData) {
   const title = cleanTitle(formData.get("title"));
   const slug = await setMediaTitle(id, title);
   if (!slug) return { error: "That video was deleted." };
+  const path = mediaPath(slug, { id, kind: "video", title });
   revalidatePath(`/${slug}`);
-  revalidatePath(`/${slug}/v/${id}`);
-  return { saved: true, title };
+  revalidatePath(path);
+  return { saved: true, title, path };
 }

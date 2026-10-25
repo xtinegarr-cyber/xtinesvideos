@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { FiCheck } from "react-icons/fi";
 import { setMediaTitleAction } from "@/app/admin/actions";
 import { FormError, inputClass } from "./forms";
@@ -19,6 +20,13 @@ function Save() {
 /** Admins only: rename a video right on its page (photos don't have titles). */
 export default function TitleEditor({ mediaId, title, placeholder }) {
   const [state, action] = useActionState(setMediaTitleAction, null);
+  const router = useRouter();
+  // The page's address includes the title, so a rename moves it.
+  useEffect(() => {
+    if (state?.saved && state.path && window.location.pathname !== state.path) {
+      router.replace(state.path, { scroll: false });
+    }
+  }, [state, router]);
   return (
     <form action={action} className="mt-4 rounded-2xl border border-line bg-panel/80 p-4">
       <input type="hidden" name="mediaId" value={mediaId} />

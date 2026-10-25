@@ -172,7 +172,7 @@ function StatusLine({ row }) {
           {row.creatorSlug && row.mediaId && (
             <>
               {" · "}
-              <Link href={`/${row.creatorSlug}/v/${row.mediaId}`} className="underline underline-offset-2">
+              <Link href={`/${row.creatorSlug}/${row.mediaId}`} className="underline underline-offset-2">
                 Edit title
               </Link>
             </>
