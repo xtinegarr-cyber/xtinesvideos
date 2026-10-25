@@ -44,7 +44,7 @@ export default function VideoView({ viewer, isVip, creator, item, more = [], loc
               </span>
             </>
           ) : video ? (
-            <VideoPlayer src={item.url} poster={item.thumbUrl} label={name} />
+            <VideoPlayer src={item.url} poster={item.thumbUrl} label={name} width={item.width} height={item.height} />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.url} alt="" className="max-h-[80dvh] w-auto max-w-full object-contain" />

@@ -39,7 +39,7 @@ function Button({ label, onClick, children, className = "" }) {
  * The site's video player: gold progress bar, big play button, controls
  * that fade out while watching, keyboard shortcuts (space, arrows, F, M).
  */
-export default function VideoPlayer({ src, poster, label = "Video" }) {
+export default function VideoPlayer({ src, poster, label = "Video", width, height }) {
   const wrap = useRef(null);
   const video = useRef(null);
   const hideTimer = useRef(null);
@@ -134,6 +134,10 @@ export default function VideoPlayer({ src, poster, label = "Video" }) {
   const loaded = duration ? (buffered / duration) * 100 : 0;
   const showControls = controls || !playing;
   const volumeShown = muted ? 0 : volume;
+  // The player has its real shape from the first paint (not only once the
+  // video starts loading), so the page doesn't jump and Google can measure
+  // the video's size and position.
+  const shape = width > 0 && height > 0 ? { aspectRatio: `${width} / ${height}` } : undefined;
 
   return (
     <div
@@ -190,7 +194,10 @@ export default function VideoPlayer({ src, poster, label = "Video" }) {
           }
         }}
         onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
-        className={`block w-full bg-black object-contain ${fullscreen ? "h-full" : "max-h-[75dvh]"}`}
+        width={width || undefined}
+        height={height || undefined}
+        style={fullscreen ? undefined : shape}
+        className={`block w-full bg-black object-contain ${fullscreen ? "h-full" : "h-auto max-h-[75dvh]"}`}
       />
 
       {/* Big play / replay button while stopped */}
