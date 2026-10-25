@@ -3,7 +3,6 @@ import { FiCheck, FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import { GetVipButton } from "./VipForms";
 import { FormError, FormNotice } from "./forms";
-import { PASS_MINUTES } from "@/lib/free-vip";
 
 const PERKS = [
   "Every VIP creator’s profile, videos and photos",
@@ -81,13 +80,6 @@ export default function VipView({ viewer, priceLabel, configured, error }) {
               {!configured && <FormNotice message={ERRORS.setup} />}
               {configured && <FormError message={ERRORS[error]} />}
               <GetVipButton className="h-12 w-full px-6">Get VIP for {priceLabel}/month</GetVipButton>
-              <p className="text-center text-sm text-muted">
-                Or{" "}
-                <Link href="/vip/reddit" className="font-semibold text-fg underline-offset-4 hover:underline">
-                  get {PASS_MINUTES} minutes free
-                </Link>{" "}
-                by sharing a video on Reddit.
-              </p>
               {!viewer && (
                 <p className="text-center text-sm text-muted">
                   Already VIP?{" "}

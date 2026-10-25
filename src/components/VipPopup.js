@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FiLock, FiX } from "react-icons/fi";
 import { GetVipButton } from "./VipForms";
-import { PASS_MINUTES } from "@/lib/free-vip";
 
 const DELAY_MS = 60_000;
 const STARTED_KEY = "xv_visit_started";
@@ -106,13 +105,6 @@ export default function VipPopup({ priceLabel }) {
             Not now
           </button>
         </div>
-        <p className="mt-4 text-center text-sm text-muted">
-          Or{" "}
-          <a href="/vip/reddit" className="font-semibold text-fg underline-offset-4 hover:underline">
-            get {PASS_MINUTES} minutes free
-          </a>{" "}
-          by sharing a video on Reddit.
-        </p>
       </div>
     </div>
   );

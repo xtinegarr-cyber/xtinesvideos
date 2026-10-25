@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FiArrowLeft, FiGift, FiLock } from "react-icons/fi";
+import { FiArrowLeft, FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import ShareBox from "./ShareBox";
 import VideoPlayer from "./VideoPlayer";
@@ -72,9 +72,6 @@ export default function VideoView({ viewer, isVip, creator, item, more = [], loc
               <GetVipButton formClassName="w-full max-w-xs" className="h-12 w-full px-7">
                 Get VIP for {priceLabel}/month
               </GetVipButton>
-              <Link href="/vip/reddit" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-fg">
-                <FiGift aria-hidden /> Or get {rewardMinutes} minutes free by sharing on Reddit
-              </Link>
             </div>
           </section>
         ) : (
