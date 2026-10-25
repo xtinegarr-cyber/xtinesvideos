@@ -5,6 +5,7 @@ import { formatViews } from "@/lib/format";
 
 /**
  * creator: { slug, name, tier, views, isNew, imageUrl, locked }
+ * views is null for locked VIP creators: their count is for VIP members only.
  * For locked VIP creators, imageUrl is already the blurred version.
  */
 export default function CreatorCard({ creator }) {
@@ -36,10 +37,17 @@ export default function CreatorCard({ creator }) {
 
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-12">
         <p className="truncate text-base font-bold leading-tight text-white">{creator.name}</p>
-        <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-white/75">
-          <FiEye aria-hidden className="shrink-0" />
-          {formatViews(creator.views)}
-        </p>
+        {creator.views === null ? (
+          <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-gold">
+            <FiLock aria-hidden className="shrink-0" />
+            VIP only
+          </p>
+        ) : (
+          <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-white/75">
+            <FiEye aria-hidden className="shrink-0" />
+            {formatViews(creator.views)}
+          </p>
+        )}
       </div>
     </Link>
   );

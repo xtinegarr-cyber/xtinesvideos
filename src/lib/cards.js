@@ -3,7 +3,8 @@ import { fileUrl } from "./storage";
 
 /**
  * Database creator row -> what a creator card shows. Visitors without VIP
- * only ever get the pre-blurred picture of a VIP creator.
+ * only ever get the pre-blurred picture of a VIP creator, and not their
+ * view count (null, so the number never reaches the browser).
  */
 export async function creatorCard(row, viewer, now = Date.now()) {
   const locked = row.tier === "vip" && !viewer?.isVip;
@@ -12,7 +13,7 @@ export async function creatorCard(row, viewer, now = Date.now()) {
     slug: row.slug,
     name: row.name,
     tier: row.tier,
-    views: Number(row.view_count) || 0,
+    views: locked ? null : Number(row.view_count) || 0,
     isNew: isNew(row.created_at, now),
     locked,
     imageUrl: await fileUrl(locked ? row.avatar_blur_key : row.avatar_key),

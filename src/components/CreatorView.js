@@ -97,9 +97,11 @@ export default function CreatorView({ viewer, creator, items, counts, canManage,
             )}
             <h1 className="break-words text-4xl font-extrabold tracking-tight sm:text-5xl">{creator.name}</h1>
             <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-              <span className="inline-flex items-center gap-1.5">
-                <FiEye aria-hidden /> {formatViews(creator.views)}
-              </span>
+              {creator.views !== null && (
+                <span className="inline-flex items-center gap-1.5">
+                  <FiEye aria-hidden /> {formatViews(creator.views)}
+                </span>
+              )}
               <span>{plural(videos, "video")}</span>
               <span>{plural(photos, "photo")}</span>
             </p>
