@@ -55,6 +55,13 @@ export default async function MediaPage({ params }) {
   const locked = media.creator_tier === "vip" && !access.isVip;
   const item = await mediaItem(media, locked, { withFile: true });
   const free = media.creator_tier === "free";
+  if (free && media.kind === "video") {
+    // The player uses the same permanent addresses the sitemap and the
+    // structured data give Google. Google can't reliably index video or
+    // thumbnails behind links that expire, like R2's signed ones.
+    item.url = `/media/${media.id}/video`;
+    item.thumbUrl = `/media/${media.id}/thumb`;
+  }
   // A few more of the same kind (videos after a video), newest first.
   const more = locked
     ? []
