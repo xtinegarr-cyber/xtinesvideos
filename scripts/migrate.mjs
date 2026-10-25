@@ -62,18 +62,19 @@ try {
   await client.query(schema);
   console.log("Database tables are ready.");
 
-  // Once: undo the automatic titles made from file names (many were just
-  // numbers). Videos go back to "<creator> video" to be named by hand, and
-  // photos lose their titles (photos don't have titles). Titles typed in by
-  // hand since then are kept: only titles that still match what the file
-  // name would give are cleared.
+  // Once: undo the automatic titles given to earlier uploads (many were
+  // just numbers). Videos go back to "<creator> video" to be named by hand,
+  // and photos lose their titles (photos don't have titles). Titles typed in
+  // by hand are kept: only titles that still match what the file name would
+  // give are cleared. Uploads from 25 Oct 2026 on, which are titled from
+  // their file names on purpose, are never touched.
   const resetDone = await client.query("SELECT 1 FROM app_settings WHERE key = 'titles_reset_to_default'");
   if (!resetDone.rows.length) {
     try {
       const { titleFromFileName } = await import(new URL("../src/lib/format.js", import.meta.url));
-      const photos = (await client.query("UPDATE media SET title = NULL WHERE kind = 'image' AND title IS NOT NULL RETURNING id")).rows.length;
+      const photos = (await client.query("UPDATE media SET title = NULL WHERE kind = 'image' AND title IS NOT NULL AND created_at < '2026-10-25T11:00:00Z' RETURNING id")).rows.length;
       const { rows } = await client.query(
-        "SELECT id, title, original_name FROM media WHERE kind = 'video' AND title IS NOT NULL",
+        "SELECT id, title, original_name FROM media WHERE kind = 'video' AND title IS NOT NULL AND created_at < '2026-10-25T11:00:00Z'",
       );
       let cleared = 0;
       for (const row of rows) {

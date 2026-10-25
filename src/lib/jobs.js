@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { findMediaByUpload, getCreatorById, insertMedia } from "./creators";
+import { titleFromFileName } from "./format";
 import { detectKind, MediaError, processImage, processVideo } from "./media-processing";
 import { deleteFiles, StorageError, uploadFile } from "./storage";
 import { listUploads, readUpload, saveUpload, uploadDir, uploadFilePath } from "./uploads";
@@ -132,6 +133,10 @@ async function processUpload(id) {
       sizeBytes: size,
       originalName: meta.fileName,
       uploadId: id,
+      // "Beach day.mp4" -> "Beach day". Camera-style names (IMG_1234) give
+      // no title, so those show as "<creator> video" until renamed. Photos
+      // don't have titles.
+      title: kind === "video" ? titleFromFileName(meta.fileName) : null,
     });
     if (!row) {
       // Already saved by an earlier run of this same upload: keep that one.
