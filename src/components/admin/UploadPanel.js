@@ -15,6 +15,7 @@ import { quietButton } from "@/components/forms";
 const MAX_RESTARTS = 3; // times one file is sent again after the server lost it
 const MAX_FAILURES = 40; // connection errors in a row (about 18 minutes) before giving up
 const POLL_MS = 4000;
+const NAMES_KEY = "xv_upload_use_file_names";
 const STALE_MS = 2 * 60 * 1000;
 
 const VIDEO = /\.(mp4|mov|m4v|mkv|webm|avi|wmv|flv|3gp|mpe?g|ts|mts)$/i;
@@ -272,8 +273,26 @@ export default function UploadPanel({ creators, storageReady }) {
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState("");
   const [wakeLock, setWakeLock] = useState(false);
+  const [useNames, setUseNames] = useState(true);
   const [, setTick] = useState(0);
   const inputRef = useRef(null);
+
+  // "Use file names as titles" is remembered in this browser.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(NAMES_KEY) === "off") setUseNames(false);
+    } catch {
+      // Storage blocked: the switch starts on.
+    }
+  }, []);
+  function chooseUseNames(on) {
+    setUseNames(on);
+    try {
+      localStorage.setItem(NAMES_KEY, on ? "on" : "off");
+    } catch {
+      // Storage blocked: the choice lasts until the page is reloaded.
+    }
+  }
 
   // Rows are plain objects updated in place by the upload loop; `render`
   // tells React to redraw. This keeps long-running loops free of stale state.
@@ -352,6 +371,7 @@ export default function UploadPanel({ creators, storageReady }) {
         fileName: row.file.name,
         size: row.file.size,
         type: row.file.type,
+        useFileName: row.useFileName !== false,
       }),
     );
     row.serverId = id;
@@ -578,6 +598,7 @@ export default function UploadPanel({ creators, storageReady }) {
         kind,
         creatorId: creator.id,
         creatorName: creator.name,
+        useFileName: useNames, // the switch as it was when this file was added
         status: "waiting",
         progress: 0,
         error: null,
@@ -663,7 +684,42 @@ export default function UploadPanel({ creators, storageReady }) {
       </label>
 
       <div>
-        <span className="mb-1.5 block text-sm font-semibold">2. Drop videos and photos</span>
+        <span className="mb-1.5 block text-sm font-semibold">2. Video titles</span>
+        <div className="flex max-w-xl items-start gap-3 rounded-2xl border border-line bg-ink/40 p-4">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useNames}
+            aria-labelledby="use-names-label"
+            aria-describedby="use-names-hint"
+            onClick={() => chooseUseNames(!useNames)}
+            className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${
+              useNames ? "bg-gold" : "bg-raised ring-1 ring-line"
+            }`}
+          >
+            <span
+              aria-hidden
+              className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${
+                useNames ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+          <div className="min-w-0">
+            <p id="use-names-label" className="text-sm font-semibold">
+              Use file names as titles {useNames ? "(on)" : "(off)"}
+            </p>
+            <p id="use-names-hint" className="mt-0.5 text-sm text-muted">
+              {useNames
+                ? "“Beach day.mp4” is titled “Beach day”. Names that are only numbers, like IMG_1234, still get the standard name."
+                : `Every video is called “${creators.find((c) => String(c.id) === creatorId)?.name || "Creator"} video” until you rename it.`}{" "}
+              Files you’ve already added keep the setting they were added with.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span className="mb-1.5 block text-sm font-semibold">3. Drop videos and photos</span>
         <button
           type="button"
           onClick={() => (creatorId ? inputRef.current?.click() : setNotice("Choose which creator these files are for first."))}

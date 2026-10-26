@@ -15,11 +15,18 @@ export async function POST(request) {
 
   try {
     await resumeInterrupted();
-    const { creatorId, fileName, size, type } = await request.json();
+    const { creatorId, fileName, size, type, useFileName } = await request.json();
     const creator = await getCreatorById(Number(creatorId));
     if (!creator) return jsonError(404, "That creator doesn't exist anymore.");
     if (!detectKind(fileName, type)) return jsonError(415, `${fileName} isn't a video or photo.`);
-    const upload = await createUpload({ creatorId: creator.id, creatorName: creator.name, fileName, size, type });
+    const upload = await createUpload({
+      creatorId: creator.id,
+      creatorName: creator.name,
+      fileName,
+      size,
+      type,
+      useFileName: useFileName !== false,
+    });
     return Response.json({ id: upload.id, chunkSize: CHUNK_BYTES });
   } catch (err) {
     return handleApiError(err);

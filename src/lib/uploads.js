@@ -86,7 +86,7 @@ async function checkDiskSpace(bytes) {
   }
 }
 
-export async function createUpload({ creatorId, creatorName, fileName, size, type }) {
+export async function createUpload({ creatorId, creatorName, fileName, size, type, useFileName = true }) {
   const bytes = Number(size);
   if (!Number.isInteger(bytes) || bytes <= 0) throw new UploadError(400, "The file is empty.");
   if (bytes > maxUploadBytes()) {
@@ -104,6 +104,8 @@ export async function createUpload({ creatorId, creatorName, fileName, size, typ
     fileName: cleanName(fileName),
     size: bytes,
     type: String(type || ""),
+    // The upload panel's "Use file names as titles" switch.
+    useFileName: useFileName !== false,
     received: 0,
     status: "uploading", // uploading -> queued -> processing -> done | failed
     error: null,

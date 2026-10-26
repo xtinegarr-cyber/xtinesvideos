@@ -133,10 +133,11 @@ async function processUpload(id) {
       sizeBytes: size,
       originalName: meta.fileName,
       uploadId: id,
-      // "Beach day.mp4" -> "Beach day". Camera-style names (IMG_1234) give
-      // no title, so those show as "<creator> video" until renamed. Photos
-      // don't have titles.
-      title: kind === "video" ? titleFromFileName(meta.fileName) : null,
+      // "Beach day.mp4" -> "Beach day", unless "Use file names as titles"
+      // was off for this upload. Camera-style names (IMG_1234) give no
+      // title either, so those show as "<creator> video" until renamed.
+      // Photos don't have titles.
+      title: kind === "video" && meta.useFileName !== false ? titleFromFileName(meta.fileName) : null,
     });
     if (!row) {
       // Already saved by an earlier run of this same upload: keep that one.
