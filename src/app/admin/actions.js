@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteCreator, deleteMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
+import { deleteCreator, deleteMedia, getCreatorById, getMediaWithCreator, listMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
 import { cleanTitle, endOfDay, mediaPath } from "@/lib/format";
 import { createUser, deleteMember, findUserById } from "@/lib/members";
 import { stripe, stripeConfigured } from "@/lib/stripe";
@@ -9,6 +9,7 @@ import { validatePassword, validateUsername } from "@/lib/passwords";
 import { requireAdmin } from "@/lib/session";
 import { deleteFiles } from "@/lib/storage";
 import { decideClaim } from "@/lib/vip-pass";
+import { notifyIndexNow } from "@/lib/indexnow";
 
 function idFrom(formData, field) {
   const id = Number(formData.get(field));
@@ -19,15 +20,23 @@ function idFrom(formData, field) {
 export async function setTierAction(formData) {
   await requireAdmin();
   const tier = formData.get("tier") === "vip" ? "vip" : "free";
-  await setCreatorTier(idFrom(formData, "creatorId"), tier);
+  const id = idFrom(formData, "creatorId");
+  await setCreatorTier(id, tier);
   revalidatePath("/", "layout");
+  const creator = await getCreatorById(id);
+  if (creator) notifyIndexNow(["/", `/${creator.slug}`]);
 }
 
 export async function deleteCreatorAction(formData) {
   await requireAdmin();
-  const keys = await deleteCreator(idFrom(formData, "creatorId"));
+  const id = idFrom(formData, "creatorId");
+  const creator = await getCreatorById(id);
+  const pages = creator ? (await listMedia(id)).map((m) => mediaPath(creator.slug, m)) : [];
+  const keys = await deleteCreator(id);
   await deleteFiles(keys);
   revalidatePath("/", "layout");
+  // Their pages are gone: search engines can drop them sooner.
+  if (creator) notifyIndexNow(["/", `/${creator.slug}`, ...pages]);
 }
 
 export async function deleteMediaAction(formData) {
@@ -36,6 +45,7 @@ export async function deleteMediaAction(formData) {
   if (removed) {
     await deleteFiles(removed.keys);
     revalidatePath(`/${removed.slug}`);
+    notifyIndexNow([mediaPath(removed.slug, removed.media), `/${removed.slug}`]);
   }
 }
 
@@ -95,10 +105,13 @@ export async function setMediaTitleAction(_prev, formData) {
   await requireAdmin();
   const id = idFrom(formData, "mediaId");
   const title = cleanTitle(formData.get("title"));
+  const before = await getMediaWithCreator(id);
   const slug = await setMediaTitle(id, title);
   if (!slug) return { error: "That video was deleted." };
   const path = mediaPath(slug, { id, kind: "video", title });
   revalidatePath(`/${slug}`);
   revalidatePath(path);
+  // The new address, plus the old one (which now redirects to it).
+  if (before && before.title !== title) notifyIndexNow([path, mediaPath(before.creator_slug, before), `/${slug}`]);
   return { saved: true, title, path };
 }

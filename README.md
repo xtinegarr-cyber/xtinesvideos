@@ -73,7 +73,15 @@ memberships are sold with Stripe for $4.99/month.
   previews keep working. VIP creators' thumbnails there are blurred.
 - `/sitemap.xml` lists every creator and video page; `/robots.txt` keeps
   admin, account and login pages out of search. Submit the sitemap in
-  Google Search Console.
+  Google Search Console, and in Bing Webmaster Tools (which can import the
+  site from Search Console).
+- IndexNow: when a video is uploaded, renamed or deleted, or a creator is
+  added, changed or deleted, the site tells Bing within about a minute
+  instead of waiting to be crawled (Bing shares it with Yandex, Naver,
+  Seznam and Yep; Google doesn't use IndexNow). Nothing to set up: the key
+  is made automatically and published at `/indexnow-key.txt`. The Logs tab
+  shows "IndexNow: told search engines about N pages". `INDEXNOW=off`
+  turns it off.
 
 **Video pages and free VIP from Reddit**
 - Every video and photo has its own page, opened by clicking it in the

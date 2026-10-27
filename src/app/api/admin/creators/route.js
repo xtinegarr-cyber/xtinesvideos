@@ -4,6 +4,7 @@ import { createCreator } from "@/lib/creators";
 import { handleApiError, jsonError } from "@/lib/api";
 import { hasFile, storeAvatar } from "@/lib/avatars";
 import { adminOrNull } from "@/lib/session";
+import { notifyIndexNow } from "@/lib/indexnow";
 
 export async function POST(request) {
   if (!(await adminOrNull())) return jsonError(401, "Log in as an admin.");
@@ -18,6 +19,7 @@ export async function POST(request) {
     const keys = hasFile(picture) ? await storeAvatar(picture) : {};
     const creator = await createCreator({ name, tier, ...keys });
     revalidatePath("/", "layout");
+    notifyIndexNow(["/", `/${creator.slug}`]);
     return Response.json({ creator: { id: Number(creator.id), slug: creator.slug, name: creator.name } });
   } catch (err) {
     return handleApiError(err);

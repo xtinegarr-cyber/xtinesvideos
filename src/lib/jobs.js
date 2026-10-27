@@ -5,8 +5,9 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { findMediaByUpload, getCreatorById, insertMedia } from "./creators";
-import { titleFromFileName } from "./format";
+import { findMediaByUpload, getCreatorById, getMediaWithCreator, insertMedia } from "./creators";
+import { mediaPath, titleFromFileName } from "./format";
+import { notifyIndexNow } from "./indexnow";
 import { detectKind, MediaError, processImage, processVideo } from "./media-processing";
 import { deleteFiles, StorageError, uploadFile } from "./storage";
 import { listUploads, readUpload, saveUpload, uploadDir, uploadFilePath } from "./uploads";
@@ -149,6 +150,9 @@ async function processUpload(id) {
     meta.status = "done";
     meta.mediaId = Number(row.id);
     meta.creatorSlug = creator.slug;
+    // Tell Bing about the new page. Never allowed to fail the upload.
+    const saved = await getMediaWithCreator(row.id).catch(() => null);
+    if (saved) notifyIndexNow([mediaPath(creator.slug, saved), `/${creator.slug}`]);
   } catch (err) {
     console.error(`Processing upload ${id} (${meta.fileName}) failed:`, err.detail || err);
     // e.g. the creator was deleted while this was processing.

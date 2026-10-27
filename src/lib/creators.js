@@ -178,10 +178,12 @@ export async function deleteMedia(id) {
   const row = await queryOne(
     `DELETE FROM media m USING creators c
       WHERE m.id = $1 AND c.id = m.creator_id
-      RETURNING c.slug, m.file_key, m.thumb_key, m.thumb_blur_key`,
+      RETURNING c.slug, m.id, m.kind, m.title, m.file_key, m.thumb_key, m.thumb_blur_key`,
     [id],
   );
-  return row ? { slug: row.slug, keys: [row.file_key, row.thumb_key, row.thumb_blur_key] } : null;
+  return row
+    ? { slug: row.slug, media: { id: row.id, kind: row.kind, title: row.title }, keys: [row.file_key, row.thumb_key, row.thumb_blur_key] }
+    : null;
 }
 
 /**
