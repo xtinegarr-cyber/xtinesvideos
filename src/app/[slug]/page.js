@@ -19,17 +19,32 @@ export async function generateMetadata({ params }) {
   const creator = await findCreator(String(slug).toLowerCase());
   if (!creator) return { title: `Creator not found | ${SITE_NAME}` };
 
-  // Search results show "gamercool 123 - Videos | XTINE’S VIDEOS"
   const title = `${creator.name} - Videos | ${SITE_NAME}`;
   const description =
     creator.tier === "vip"
       ? `Watch ${creator.name}’s videos and photos with VIP on ${SITE_NAME}.`
       : `Watch ${creator.name}’s videos and photos for free on ${SITE_NAME}.`;
+
+  const image = `/avatar/${creator.id}`;
+
   return {
     title,
     description,
     alternates: { canonical: `/${creator.slug}` },
-    openGraph: { title, description, url: `/${creator.slug}`, siteName: SITE_NAME, type: "profile" },
+    openGraph: {
+      title,
+      description,
+      url: `/${creator.slug}`,
+      siteName: SITE_NAME,
+      type: "profile",
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 
@@ -54,16 +69,30 @@ export default async function CreatorPage({ params, searchParams }) {
   // Visitors without VIP get no links to a VIP creator's files at all.
   const items = creator.locked ? [] : await Promise.all(media.map((m) => mediaItem(m, false)));
 
+    const schema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: creator.name,
+    url: `/${creator.slug}`,
+    image: `/avatar/${creator.id}`,
+  };
+
   return (
-    <CreatorView
-      viewer={viewer}
-      creator={creator}
-      items={items}
-      counts={counts}
-      canManage={Boolean(viewer?.isAdmin)}
-      trackView={!viewer?.isAdmin}
-      priceLabel={VIP_PRICE_LABEL}
-      initialTab={tab === "photos" ? "photos" : "videos"}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
+      />
+      <CreatorView
+        viewer={viewer}
+        creator={creator}
+        items={items}
+        counts={counts}
+        canManage={Boolean(viewer?.isAdmin)}
+        trackView={!viewer?.isAdmin}
+        priceLabel={VIP_PRICE_LABEL}
+        initialTab={tab === "photos" ? "photos" : "videos"}
+      />
+    </>
   );
 }
