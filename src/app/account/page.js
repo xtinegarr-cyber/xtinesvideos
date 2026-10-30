@@ -60,13 +60,6 @@ export default async function AccountPage({ searchParams }) {
             <FormError message="The billing page couldn’t be opened just now. Try again in a minute, or message us on Discord or Telegram." />
           )}
           <div className="flex flex-wrap gap-2 border-t border-line pt-6">
-            {viewer.hasStripe && (
-              <form action={manageSubscriptionAction}>
-                <button type="submit" className={quietButton}>
-                  {viewer.stripeStatus === "active" && !viewer.cancelAtPeriodEnd ? "Manage or cancel VIP" : "Billing and receipts"}
-                </button>
-              </form>
-            )}
             {!viewer.isVip && (
               <GetVipButton className="h-10 px-5 text-sm" />
             )}
