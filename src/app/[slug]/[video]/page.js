@@ -90,21 +90,49 @@ export default async function MediaPage({ params, searchParams }) {
       );
 
   // Tells search engines about free videos (title, thumbnail, length, date).
-  let schema = null;
+  const site = await siteUrl();
+  const displayName = displayTitle(titleOf(media), media.creator_name, media.kind);
+
+  const breadcrumbs = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: site,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: media.creator_name,
+        item: `${site}/${media.creator_slug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: displayName,
+        item: `${site}${path}`,
+      },
+    ],
+  };
+
+  let schema = {
+    "@context": "https://schema.org",
+    "@graph": [breadcrumbs],
+  };
+
   if (free && media.kind === "video") {
-    const site = await siteUrl();
-    schema = {
-      "@context": "https://schema.org",
+    schema["@graph"].unshift({
       "@type": "VideoObject",
-      name: displayTitle(titleOf(media), media.creator_name, media.kind),
+      name: displayName,
       description: describe(media),
       thumbnailUrl: [`${site}/media/${media.id}/thumb`],
-      // A permanent link to the file itself (the player's link expires).
       contentUrl: `${site}/media/${media.id}/video`,
       uploadDate: new Date(media.created_at).toISOString(),
       duration: media.duration_seconds ? isoDuration(media.duration_seconds) : undefined,
       author: { "@type": "Person", name: media.creator_name, url: `${site}/${media.creator_slug}` },
-    };
+    });
   }
 
   return (
