@@ -10,22 +10,16 @@ function Thumb({ item }) {
   if (!item.thumbUrl) return <div className="absolute inset-0 bg-raised" />;
   const vertical = item.kind === "video" && item.height > item.width;
   if (vertical) {
-    // Phone videos: show the whole frame upright over a soft blurred fill
-    // instead of cropping it into a wide box.
+    // Phone videos: show the full frame upright without a heavy blurred side fill.
     return (
-      <>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.thumbUrl}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.thumbUrl} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-contain" />
-      </>
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={item.thumbUrl}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-contain bg-black"
+      />
     );
   }
   return (
@@ -49,8 +43,8 @@ export function MediaTile({ item, href }) {
       {video && (
         <>
           <span className="absolute inset-0 grid place-items-center">
-            <span className="grid size-12 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
-              <FiPlay aria-hidden className="ml-0.5 size-5" />
+            <span className="grid size-9 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+              <FiPlay aria-hidden className="ml-0.5 size-4" />
             </span>
           </span>
           <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-white">
