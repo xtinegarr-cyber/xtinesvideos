@@ -19,7 +19,7 @@ const WEB_IMAGE_TYPES = {
   ".gif": "image/gif",
 };
 
-const THUMB_WIDTH = 640;
+const THUMB_WIDTH = 1280;
 // Photos this small already load as fast as a thumbnail, so they're used
 // as their own thumbnail. Bigger ones (like 12 MP phone photos) get a
 // 640px thumbnail so a page full of them still loads quickly.
