@@ -70,12 +70,33 @@ export default async function CreatorPage({ params, searchParams }) {
   const items = creator.locked ? [] : await Promise.all(media.map((m) => mediaItem(m, false)));
 
     const schema = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: creator.name,
-    url: `/${creator.slug}`,
-    image: `/avatar/${creator.id}`,
-  };
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      name: creator.name,
+      url: `/${creator.slug}`,
+      image: `/avatar/${creator.id}`,
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "/",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: creator.name,
+          item: `/${creator.slug}`,
+        },
+      ],
+    },
+  ],
+};
 
   return (
     <>
