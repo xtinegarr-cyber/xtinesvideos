@@ -165,6 +165,22 @@ export function listMediaForSitemap() {
   );
 }
 
+/** Latest free videos for the homepage, newest first. */
+export function listLatestFreeVideos(limit = 24) {
+  return query(
+    `SELECT m.id, m.kind, m.title, m.thumb_key, m.thumb_blur_key, m.width, m.height,
+            m.duration_seconds, m.created_at,
+            c.id AS creator_id, c.slug AS creator_slug, c.name AS creator_name,
+            c.avatar_key, c.avatar_blur_key, c.tier AS creator_tier
+       FROM media m
+       JOIN creators c ON c.id = m.creator_id
+      WHERE m.kind = 'video' AND c.tier = 'free'
+      ORDER BY m.created_at DESC, m.id DESC
+      LIMIT $1`,
+    [limit],
+  );
+}
+
 /** The saved file an upload turned into, if it finished. */
 export function findMediaByUpload(uploadId) {
   return queryOne(
