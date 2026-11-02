@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FiFilm, FiImage, FiPlay, FiTrash2 } from "react-icons/fi";
+import { FiFilm, FiImage, FiTrash2 } from "react-icons/fi";
 import { formatDuration, mediaPath } from "@/lib/format";
 import { deleteMediaAction } from "@/app/admin/actions";
 
@@ -10,7 +10,8 @@ function Thumb({ item }) {
   if (!item.thumbUrl) return <div className="absolute inset-0 bg-raised" />;
   const vertical = item.kind === "video" && item.height > item.width;
   if (vertical) {
-    // Phone videos: show the full frame upright without a heavy blurred side fill.
+    // Phone videos: scale up a little so they fill more of the frame
+    // without hard black bars or aggressive cropping.
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -18,7 +19,7 @@ function Thumb({ item }) {
         alt=""
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 h-full w-full object-contain bg-black"
+        className="absolute inset-0 h-full w-full object-cover object-center scale-110"
       />
     );
   }
@@ -41,16 +42,9 @@ export function MediaTile({ item, href }) {
     >
       <Thumb item={item} />
       {video && (
-        <>
-          <span className="absolute inset-0 grid place-items-center">
-            <span className="grid size-9 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm">
-              <FiPlay aria-hidden className="ml-0.5 size-4" />
-            </span>
-          </span>
-          <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-white">
-            {formatDuration(item.duration)}
-          </span>
-        </>
+        <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-white">
+          {formatDuration(item.duration)}
+        </span>
       )}
     </Link>
   );
