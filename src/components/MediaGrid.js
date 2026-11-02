@@ -10,8 +10,7 @@ function Thumb({ item }) {
   if (!item.thumbUrl) return <div className="absolute inset-0 bg-raised" />;
   const vertical = item.kind === "video" && item.height > item.width;
   if (vertical) {
-    // Phone videos: scale up a little so they fill more of the frame
-    // without hard black bars or aggressive cropping.
+    // Mild scale so vertical videos fill more of the frame without heavy zoom.
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -19,7 +18,7 @@ function Thumb({ item }) {
         alt=""
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 h-full w-full object-cover object-center scale-110"
+        className="absolute inset-0 h-full w-full object-cover object-center scale-105"
       />
     );
   }
