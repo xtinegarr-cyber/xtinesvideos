@@ -10,8 +10,8 @@ function Thumb({ item }) {
   if (!item.thumbUrl) return <div className="absolute inset-0 bg-raised" />;
   const vertical = item.kind === "video" && item.height > item.width;
   if (vertical) {
-    // Mild horizontal stretch so vertical videos fill more of the frame
-    // and black side bars shrink, without cropping or zooming the content.
+    // Horizontal stretch so vertical videos fill more of the side empty space
+    // without cropping the content.
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -19,7 +19,7 @@ function Thumb({ item }) {
         alt=""
         loading="lazy"
         decoding="async"
-        className="absolute left-1/2 top-0 h-full w-[125%] -translate-x-1/2 object-contain"
+        className="absolute left-1/2 top-0 h-full w-[160%] -translate-x-1/2 object-contain"
       />
     );
   }
