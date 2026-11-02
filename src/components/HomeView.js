@@ -1,9 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { FiLock } from "react-icons/fi";
 import SiteHeader from "./SiteHeader";
 import CreatorCard from "./CreatorCard";
 import VipBanner from "./VipBanner";
 import { GetVipButton } from "./VipForms";
+import { MediaTile } from "./MediaGrid";
+import CreatorImage from "./CreatorImage";
+import { mediaPath } from "@/lib/format";
 
 function Grid({ creators }) {
   return (
@@ -38,8 +44,10 @@ function Empty({ children }) {
 
 /**
  * free / vip: arrays of card data (see CreatorCard).
+ * latest: recent free videos for the Latest tab.
  */
-export default function HomeView({ viewer, isVip = Boolean(viewer?.isVip), search, free, vip, priceLabel }) {
+export default function HomeView({ viewer, isVip = Boolean(viewer?.isVip), search, free, vip, priceLabel, latest = [] }) {
+  const [tab, setTab] = useState("creators");
   const searching = Boolean(search);
   const noResults = searching && free.length === 0 && vip.length === 0;
   const showVipPitch = !isVip;
@@ -65,45 +73,94 @@ export default function HomeView({ viewer, isVip = Boolean(viewer?.isVip), searc
           </p>
         )}
 
-        {!noResults && (
-          <>
-            <section aria-labelledby="free-heading">
-              <SectionHeading title={<span id="free-heading">Free creators</span>} count={free.length} />
-              {free.length ? (
-                <Grid creators={free} />
-              ) : (
-                <Empty>{searching ? "No free creators match this search." : "Free creators will show up here."}</Empty>
-              )}
-            </section>
+        {!searching && (
+          <div role="tablist" aria-label="Home sections" className="mb-8 inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "creators"}
+              onClick={() => setTab("creators")}
+              className={`h-10 rounded-full px-5 text-sm font-bold transition-colors ${
+                tab === "creators" ? "bg-fg text-ink" : "text-muted hover:text-fg"
+              }`}
+            >
+              Creators
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "videos"}
+              onClick={() => setTab("videos")}
+              className={`h-10 rounded-full px-5 text-sm font-bold transition-colors ${
+                tab === "videos" ? "bg-fg text-ink" : "text-muted hover:text-fg"
+              }`}
+            >
+              Latest videos
+            </button>
+          </div>
+        )}
 
-            <section aria-labelledby="vip-heading" className="mt-16">
-              <SectionHeading
-                title={
-                  <span id="vip-heading" className="inline-flex items-center gap-2.5">
-                    <FiLock aria-hidden className="size-6 text-gold" strokeWidth={2.25} />
-                    VIP creators
-                  </span>
-                }
-                count={vip.length}
-                action={
-                  showVipPitch && (
-                    <GetVipButton className="h-10 px-5 text-sm">Get VIP for {priceLabel}/month</GetVipButton>
-                  )
-                }
-              >
-                <p className="mt-1.5 text-sm text-muted">
-                  {isVip
-                    ? "You have VIP, so every profile here is unlocked."
-                    : `Unlock every VIP profile for ${priceLabel} a month. Cancel anytime.`}
+        {tab === "creators" || searching ? (
+          !noResults && (
+            <>
+              <section aria-labelledby="free-heading">
+                <SectionHeading title={<span id="free-heading">Free creators</span>} count={free.length} />
+                {free.length ? (
+                  <Grid creators={free} />
+                ) : (
+                  <Empty>{searching ? "No free creators match this search." : "Free creators will show up here."}</Empty>
+                )}
+              </section>
+
+              <section aria-labelledby="vip-heading" className="mt-16">
+                <SectionHeading
+                  title={
+                    <span id="vip-heading" className="inline-flex items-center gap-2.5">
+                      <FiLock aria-hidden className="size-6 text-gold" strokeWidth={2.25} />
+                      VIP creators
+                    </span>
+                  }
+                  count={vip.length}
+                  action={
+                    showVipPitch && (
+                      <GetVipButton className="h-10 px-5 text-sm">Get VIP for {priceLabel}/month</GetVipButton>
+                    )
+                  }
+                >
+                  <p className="mt-1.5 text-sm text-muted">
+                    {isVip
+                      ? "You have VIP, so every profile here is unlocked."
+                      : `Unlock every VIP profile for ${priceLabel} a month. Cancel anytime.`}
+                  </p>
+                </SectionHeading>
+                {vip.length ? (
+                  <Grid creators={vip} />
+                ) : (
+                  <Empty>{searching ? "No VIP creators match this search." : "VIP creators will show up here."}</Empty>
+                )}
+              </section>
+            </>
+          )
+        ) : (
+          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {latest.map((v) => (
+              <li key={v.id}>
+                <div className="relative">
+                  <MediaTile item={v} href={mediaPath(v.creatorSlug, v)} />
+                  <Link
+                    href={`/${v.creatorSlug}`}
+                    className="absolute bottom-2 left-2 size-10 overflow-hidden rounded-full ring-2 ring-black/70"
+                    aria-label={v.creatorName}
+                  >
+                    <CreatorImage name={v.creatorName} src={v.creatorAvatar} className="h-full w-full" />
+                  </Link>
+                </div>
+                <p className="mt-2 line-clamp-2 text-sm font-semibold leading-snug text-fg">
+                  {v.title || `${v.creatorName} video`}
                 </p>
-              </SectionHeading>
-              {vip.length ? (
-                <Grid creators={vip} />
-              ) : (
-                <Empty>{searching ? "No VIP creators match this search." : "VIP creators will show up here."}</Empty>
-              )}
-            </section>
-          </>
+              </li>
+            ))}
+          </ul>
         )}
       </main>
     </>
