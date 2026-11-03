@@ -45,6 +45,7 @@ export default async function AdminPage() {
       createdAt: new Date(c.created_at).toISOString(),
       isNew: isNew(c.created_at, now),
       imageUrl: await fileUrl(c.avatar_key),
+      tags: c.tags || "",
     })),
   );
 
