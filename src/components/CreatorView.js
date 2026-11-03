@@ -55,71 +55,98 @@ function VipGate({ creator, counts, viewer, priceLabel }) {
 export default function CreatorView({ viewer, creator, items, counts, canManage, trackView, priceLabel, initialTab }) {
   const vip = creator.tier === "vip";
   const { videos, photos } = counts;
+  const tagList = creator.tags
+    ? creator.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : [];
 
   return (
     <>
       <SiteHeader viewer={viewer} />
       {trackView && <ViewTracker slug={creator.slug} />}
 
-      <main className="mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-fg">
           <FiArrowLeft aria-hidden /> All creators
         </Link>
 
-        <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-end">
-          <div
-            className={`relative aspect-[3/4] w-36 shrink-0 overflow-hidden rounded-2xl ring-1 sm:w-44 ${
-              vip ? "ring-gold/50" : "ring-line"
-            }`}
-          >
-            <CreatorImage name={creator.name} src={creator.imageUrl} locked={creator.locked} className="absolute inset-0" />
-            {creator.locked && (
-              <span className="absolute inset-0 grid place-items-center">
-                <FiLock aria-hidden className="size-8 text-white/90" strokeWidth={1.75} />
-              </span>
-            )}
-            {creator.isNew && (
-              <span className="absolute left-2 top-2 rounded-full bg-rose px-2.5 py-1 text-xs font-bold leading-none text-white">
-                New
-              </span>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            {vip && (
-              <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">
-                <FiLock aria-hidden /> VIP creator
-              </span>
-            )}
-            <h1 className="break-words text-4xl font-extrabold tracking-tight sm:text-5xl">{creator.name}</h1>
-            {creator.tags && (
-              <p className="mt-2 flex flex-wrap gap-1.5 text-sm">
-                {creator.tags.split(",").map((tag) => (
-                  <span key={tag.trim()} className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-muted">
-                    {tag.trim()}
-                  </span>
-                ))}
-              </p>
-            )}
-            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-              {creator.views !== null && (
-                <span className="inline-flex items-center gap-1.5">
-                  <FiEye aria-hidden /> {formatViews(creator.views)}
+        <div className="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
+          {/* Left sidebar */}
+          <aside className="lg:sticky lg:top-6 lg:self-start">
+            <div
+              className={`relative aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-2xl ring-1 ${
+                vip ? "ring-gold/50" : "ring-line"
+              }`}
+            >
+              <CreatorImage name={creator.name} src={creator.imageUrl} locked={creator.locked} className="absolute inset-0" />
+              {creator.locked && (
+                <span className="absolute inset-0 grid place-items-center">
+                  <FiLock aria-hidden className="size-8 text-white/90" strokeWidth={1.75} />
                 </span>
               )}
-              <span>{plural(videos, "video")}</span>
-              <span>{plural(photos, "photo")}</span>
-            </p>
+              {creator.isNew && (
+                <span className="absolute left-2 top-2 rounded-full bg-rose px-2.5 py-1 text-xs font-bold leading-none text-white">
+                  New
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4">
+              {vip && (
+                <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">
+                  <FiLock aria-hidden /> VIP creator
+                </span>
+              )}
+              <h1 className="break-words text-3xl font-extrabold tracking-tight">{creator.name}</h1>
+
+              <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+                {creator.views !== null && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <FiEye aria-hidden /> {formatViews(creator.views)}
+                  </span>
+                )}
+                <span>{plural(videos, "video")}</span>
+                <span>{plural(photos, "photo")}</span>
+              </p>
+
+              {tagList.length > 0 && (
+                <div className="mt-6">
+                  <h2 className="text-sm font-bold uppercase tracking-wide text-muted">Categories</h2>
+                  <ul className="mt-2 space-y-1">
+                    {tagList.map((tag) => (
+                      <li key={tag}>
+                        <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-fg/90">
+                          {tag}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* Right content */}
+          <div>
+            {creator.locked ? (
+              <VipGate creator={creator} counts={counts} viewer={viewer} priceLabel={priceLabel} />
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
+                  <h2 className="text-2xl font-extrabold tracking-tight">Videos</h2>
+                  <div className="flex gap-4 text-sm font-bold">
+                    <span className="text-fg">Most recent</span>
+                    <span className="text-muted">Most viewed</span>
+                    <span className="text-muted">Best rated</span>
+                  </div>
+                </div>
+                <MediaGrid items={items} canManage={canManage} initialTab={initialTab} creatorSlug={creator.slug} />
+              </>
+            )}
           </div>
         </div>
-
-        {creator.locked ? (
-          <VipGate creator={creator} counts={counts} viewer={viewer} priceLabel={priceLabel} />
-        ) : (
-          <div className="mt-8">
-            <MediaGrid items={items} canManage={canManage} initialTab={initialTab} creatorSlug={creator.slug} />
-          </div>
-        )}
       </main>
     </>
   );
