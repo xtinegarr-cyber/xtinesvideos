@@ -1,7 +1,7 @@
 import { query, queryOne } from "./db";
 import { RESERVED_SLUGS, slugify } from "./format";
 
-const CREATOR_FIELDS = "id, slug, name, tier, avatar_key, avatar_blur_key, view_count, created_at";
+const CREATOR_FIELDS = "id, slug, name, tier, avatar_key, avatar_blur_key, view_count, created_at, tags";
 
 function escapeLike(text) {
   return String(text).replace(/[\\%_]/g, (c) => `\\${c}`);
@@ -39,7 +39,7 @@ export function getCreatorById(id) {
 /** For the admin panel, A to Z: totals plus views in the last 7 days. */
 export async function listCreatorsForAdmin() {
   return aToZ(await query(
-    `SELECT c.id, c.slug, c.name, c.tier, c.avatar_key, c.avatar_blur_key, c.view_count, c.created_at,
+    `SELECT c.id, c.slug, c.name, c.tier, c.avatar_key, c.avatar_blur_key, c.view_count, c.created_at, c.tags,
             (SELECT count(*)::int FROM media m WHERE m.creator_id = c.id) AS media_count,
             (SELECT count(*)::int FROM creator_views v
               WHERE v.creator_id = c.id AND v.view_date > current_date - 7) AS views_7d
@@ -231,4 +231,14 @@ export async function siteStats() {
             (SELECT count(*)::int FROM users
               WHERE role = 'member' AND (vip_lifetime OR vip_until > now())) AS vip_members`,
   );
+}
+
+/** Sets the tags string for a creator (comma-separated). */
+export async function setCreatorTags(id, tags) {
+  const clean = String(tags || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .join(", ");
+  await query("UPDATE creators SET tags = $2 WHERE id = $1", [id, clean || null]);
 }
