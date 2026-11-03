@@ -322,7 +322,7 @@ export default function AdminView({
           title="Creators"
           description="Change tier, tags, photo, or delete. Tags are comma-separated (example: Asian, Latina)."
         >
-          <CreateCreatorForm />
+         <CreateCreatorForm storageReady={storageReady} />
           <ul className="mt-6 divide-y divide-line">
             {creators.map((c) => (
               <CreatorRow key={c.id} creator={c} storageReady={storageReady} />
