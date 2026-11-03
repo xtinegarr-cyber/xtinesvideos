@@ -17,6 +17,7 @@ export async function creatorCard(row, viewer, now = Date.now()) {
     isNew: isNew(row.created_at, now),
     locked,
     imageUrl: await fileUrl(locked ? row.avatar_blur_key : row.avatar_key),
+    tags: row.tags || "",
   };
 }
 
