@@ -7,7 +7,7 @@ import { ChangePhotoButton, CreateCreatorForm } from "./CreatorForms";
 import MemberForm from "./MemberForm";
 import ConfirmButton from "./ConfirmButton";
 import CopyLink from "./CopyLink";
-import { decideClaimAction, deleteCreatorAction, deleteMemberAction, setTierAction } from "@/app/admin/actions";
+import { decideClaimAction, deleteCreatorAction, deleteMemberAction, setTierAction, setCreatorTagsAction } from "@/app/admin/actions";
 import { formatDate, formatViews, SITE_TIME_ZONE } from "@/lib/format";
 import { VIP_PRICE_LABEL } from "@/lib/vip";
 import { PASS_MINUTES } from "@/lib/free-vip";
@@ -85,6 +85,18 @@ function CreatorRow({ creator, storageReady }) {
           </button>
         </form>
       </div>
+      <form action={setCreatorTagsAction} className="flex items-center gap-2">
+        <input type="hidden" name="creatorId" value={creator.id} />
+        <input
+          name="tags"
+          defaultValue={creator.tags || ""}
+          placeholder="Asian, Latina, Blonde"
+          className="h-8 w-48 rounded-full border border-line bg-raised px-3 text-xs"
+        />
+        <button type="submit" className="text-xs font-semibold text-muted hover:text-fg">
+          Save
+        </button>
+      </form>
       <div className="flex items-center gap-2">
         <ChangePhotoButton creatorId={creator.id} disabled={!storageReady} />
         <form action={deleteCreatorAction}>
@@ -300,67 +312,53 @@ export default function AdminView({
         <Section
           id="upload-heading"
           title="Upload videos and photos"
-          description="Pick a creator, drop files, then pick another creator and drop more. Everything goes into one line and uploads in order. Each file is optimized to load fast, gets a thumbnail, and appears on the creator’s page when it’s ready. Keep this tab open until everything is sent; processing finishes on the server."
+          description="Choose a creator, then drop files. Videos and photos are processed in the background."
         >
-          <UploadPanel creators={uploadCreators} storageReady={storageReady} />
+          <UploadPanel creators={uploadCreators} />
         </Section>
 
         <Section
           id="creators-heading"
           title="Creators"
-          description="Add creators your team has approved on Discord. VIP creators show blurred to everyone without VIP."
+          description="Change tier, tags, photo, or delete. Tags are comma-separated (example: Asian, Latina)."
         >
-          <CreateCreatorForm storageReady={storageReady} />
-          <div className="mt-8 border-t border-line pt-2">
-            {creators.length ? (
-              <ul className="divide-y divide-line">
-                {creators.map((c) => (
-                  <CreatorRow key={c.id} creator={c} storageReady={storageReady} />
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-muted">No creators yet. Create the first one above.</p>
-            )}
-          </div>
-        </Section>
-
-        <Section
-          id="reddit-heading"
-          title={`Free VIP from Reddit${redditClaims.pending.length ? ` (${redditClaims.pending.length} waiting)` : ""}`}
-          description={`Visitors who shared a free creator’s video on Reddit get ${PASS_MINUTES} minutes of VIP, once a day. No account needed: it’s tied to their browser.`}
-        >
-          <RedditClaims claims={redditClaims} apiConfigured={redditApi} />
+          <CreateCreatorForm />
+          <ul className="mt-6 divide-y divide-line">
+            {creators.map((c) => (
+              <CreatorRow key={c.id} creator={c} storageReady={storageReady} />
+            ))}
+          </ul>
         </Section>
 
         <Section
           id="members-heading"
           title="VIP members"
-          description={`${activeMembers} with VIP${toReview ? `, ${toReview} to review (their payment stopped but they still have VIP)` : ""}. Buyers appear here automatically and keep VIP until you remove them. You can also add members yourself, with or without an end date.`}
+          description={`${activeMembers} active${toReview ? `, ${toReview} need review` : ""}.`}
         >
           <MemberForm />
-          <div className="mt-8 overflow-x-auto">
-            {members.length ? (
-              <table className="w-full min-w-[40rem] text-left text-sm">
-                <thead className="text-muted">
-                  <tr>
-                    <th className="pb-2 pl-2 pr-4 font-semibold">Email or username</th>
-                    <th className="pb-2 pr-4 font-semibold">VIP</th>
-                    <th className="pb-2 pr-4 font-semibold">Payment</th>
-                    <th className="pb-2 pr-4 font-semibold">Joined</th>
-                    <th className="pb-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedMembers.map((m) => (
-                    <MemberRow key={m.id} member={m} />
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="py-2 text-muted">No VIP members yet.</p>
-            )}
-          </div>
           <PendingCheckouts checkouts={pendingCheckouts} />
+          <div className="mt-8 overflow-x-auto">
+            <table className="w-full min-w-[40rem] text-left text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-muted">
+                  <th className="pb-2 pl-2 font-semibold">Login</th>
+                  <th className="pb-2 font-semibold">VIP</th>
+                  <th className="pb-2 font-semibold">Payment</th>
+                  <th className="pb-2 font-semibold">Joined</th>
+                  <th className="pb-2 pr-2 text-right font-semibold"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedMembers.map((m) => (
+                  <MemberRow key={m.id} member={m} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <Section id="reddit-heading" title="Free VIP from Reddit" description={`Reward is ${PASS_MINUTES} minutes.`}>
+          <RedditClaims claims={redditClaims} apiConfigured={redditApi} />
         </Section>
       </main>
     </>
