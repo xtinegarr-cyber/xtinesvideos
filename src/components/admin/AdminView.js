@@ -314,7 +314,7 @@ export default function AdminView({
           title="Upload videos and photos"
           description="Choose a creator, then drop files. Videos and photos are processed in the background."
         >
-          <UploadPanel creators={uploadCreators} />
+          <UploadPanel creators={uploadCreators} storageReady={storageReady} />
         </Section>
 
         <Section
