@@ -92,6 +92,15 @@ export default function CreatorView({ viewer, creator, items, counts, canManage,
               </span>
             )}
             <h1 className="break-words text-4xl font-extrabold tracking-tight sm:text-5xl">{creator.name}</h1>
+            {creator.tags && (
+              <p className="mt-2 flex flex-wrap gap-1.5 text-sm">
+                {creator.tags.split(",").map((tag) => (
+                  <span key={tag.trim()} className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-muted">
+                    {tag.trim()}
+                  </span>
+                ))}
+              </p>
+            )}
             <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
               {creator.views !== null && (
                 <span className="inline-flex items-center gap-1.5">
