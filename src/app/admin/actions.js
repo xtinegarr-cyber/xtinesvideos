@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deleteCreator, deleteMedia, getCreatorById, getMediaWithCreator, listMedia, setCreatorTier, setMediaTitle } from "@/lib/creators";
+import { deleteCreator, deleteMedia, getCreatorById, getMediaWithCreator, listMedia, setCreatorTier, setMediaTitle, setCreatorTags } from "@/lib/creators";
 import { cleanTitle, endOfDay, mediaPath } from "@/lib/format";
 import { createUser, deleteMember, findUserById } from "@/lib/members";
 import { stripe, stripeConfigured } from "@/lib/stripe";
@@ -22,6 +22,16 @@ export async function setTierAction(formData) {
   const tier = formData.get("tier") === "vip" ? "vip" : "free";
   const id = idFrom(formData, "creatorId");
   await setCreatorTier(id, tier);
+  revalidatePath("/", "layout");
+  const creator = await getCreatorById(id);
+  if (creator) notifyIndexNow(["/", `/${creator.slug}`]);
+}
+
+export async function setCreatorTagsAction(formData) {
+  await requireAdmin();
+  const id = idFrom(formData, "creatorId");
+  const tags = String(formData.get("tags") || "");
+  await setCreatorTags(id, tags);
   revalidatePath("/", "layout");
   const creator = await getCreatorById(id);
   if (creator) notifyIndexNow(["/", `/${creator.slug}`]);
