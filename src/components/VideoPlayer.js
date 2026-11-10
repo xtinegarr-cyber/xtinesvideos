@@ -38,6 +38,9 @@ function Button({ label, onClick, children, className = "" }) {
 /**
  * The site's video player: gold progress bar, big play button, controls
  * that fade out while watching, keyboard shortcuts (space, arrows, F, M).
+ *
+ * Fullscreen uses object-fit: contain + max dimensions so portrait videos
+ * letterbox instead of zooming/cropping (see MDN Fullscreen API + object-fit).
  */
 export default function VideoPlayer({ src, poster, label = "Video", width, height }) {
   const wrap = useRef(null);
@@ -56,7 +59,6 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
   const [fullscreen, setFullscreen] = useState(false);
   const [controls, setControls] = useState(true);
 
-  // Controls show on any movement and fade after a moment of watching.
   const poke = useCallback(() => {
     setControls(true);
     clearTimeout(hideTimer.current);
@@ -85,7 +87,6 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
     if (!v) return;
     if (v.paused || v.ended) v.play().catch(() => {});
     else v.pause();
-    // Keep keyboard shortcuts working after a click.
     wrap.current?.focus({ preventScroll: true });
     poke();
   }, [poke]);
@@ -111,12 +112,11 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
     const v = video.current;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else if (wrap.current?.requestFullscreen) wrap.current.requestFullscreen().catch(() => {});
-    // iPhone Safari only lets the video itself go full screen.
     else if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen();
   }, []);
 
   function onKey(e) {
-    if (e.target instanceof HTMLInputElement) return; // sliders handle their own keys
+    if (e.target instanceof HTMLInputElement) return;
     const key = e.key.toLowerCase();
     if (key === " " || key === "k") toggle();
     else if (key === "arrowleft" || key === "j") seekBy(key === "j" ? -10 : -5);
@@ -134,9 +134,6 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
   const loaded = duration ? (buffered / duration) * 100 : 0;
   const showControls = controls || !playing;
   const volumeShown = muted ? 0 : volume;
-  // The player has its real shape from the first paint (not only once the
-  // video starts loading), so the page doesn't jump and Google can measure
-  // the video's size and position.
   const shape = width > 0 && height > 0 ? { aspectRatio: `${width} / ${height}` } : undefined;
 
   return (
@@ -149,7 +146,7 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
       onMouseMove={poke}
       onTouchStart={poke}
       className={`xv-player group relative grid w-full place-items-center overflow-hidden bg-black outline-none ${
-        fullscreen ? "h-full" : "rounded-2xl ring-1 ring-line focus-visible:ring-gold/60"
+        fullscreen ? "h-full w-full" : "rounded-2xl ring-1 ring-line focus-visible:ring-gold/60"
       } ${showControls ? "" : "cursor-none"}`}
     >
       <video
@@ -190,21 +187,18 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
           try {
             if (e.currentTarget.volume > 0) localStorage.setItem(VOLUME_KEY, String(e.currentTarget.volume));
           } catch {
-            // Storage blocked: volume just isn't remembered.
+            // Storage blocked.
           }
         }}
         onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
         width={width || undefined}
         height={height || undefined}
-        style={fullscreen ? { objectFit: "contain" } : shape}
+        style={fullscreen ? { objectFit: "contain", maxWidth: "100%", maxHeight: "100%" } : shape}
         className={`block bg-black object-contain ${
-          fullscreen
-            ? "max-h-full max-w-full h-auto w-auto"
-            : "w-full h-auto max-h-[75dvh]"
+          fullscreen ? "max-h-full max-w-full h-auto w-auto" : "w-full h-auto max-h-[75dvh]"
         }`}
       />
 
-      {/* Big play / replay button while stopped */}
       {!playing && !waiting && (
         <button
           type="button"
@@ -216,7 +210,6 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
         </button>
       )}
 
-      {/* Buffering */}
       {waiting && (
         <span
           aria-label="Loading"
@@ -225,7 +218,6 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
         />
       )}
 
-      {/* Control bar */}
       <div
         className={`pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-3 pb-1.5 pt-8 transition-opacity sm:pb-2 sm:pt-12 duration-300 sm:px-4 ${
           showControls && started ? "opacity-100 [&>*]:pointer-events-auto" : "opacity-0"
