@@ -196,8 +196,12 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
         onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
         width={width || undefined}
         height={height || undefined}
-        style={fullscreen ? undefined : shape}
-        className={`block w-full bg-black object-contain ${fullscreen ? "h-full" : "h-auto max-h-[75dvh]"}`}
+        style={fullscreen ? { objectFit: "contain" } : shape}
+        className={`block bg-black object-contain ${
+          fullscreen
+            ? "max-h-full max-w-full h-auto w-auto"
+            : "w-full h-auto max-h-[75dvh]"
+        }`}
       />
 
       {/* Big play / replay button while stopped */}
