@@ -39,8 +39,9 @@ function Button({ label, onClick, children, className = "" }) {
  * The site's video player: gold progress bar, big play button, controls
  * that fade out while watching, keyboard shortcuts (space, arrows, F, M).
  *
- * Fullscreen uses object-fit: contain + max dimensions so portrait videos
- * letterbox instead of zooming/cropping (see MDN Fullscreen API + object-fit).
+ * Fullscreen fills the entire viewport with object-fit: cover so portrait
+ * videos expand to the full screen (edges are cropped if the aspect ratios
+ * don't match) instead of letterboxing with large black bars.
  */
 export default function VideoPlayer({ src, poster, label = "Video", width, height }) {
   const wrap = useRef(null);
@@ -193,9 +194,11 @@ export default function VideoPlayer({ src, poster, label = "Video", width, heigh
         onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
         width={width || undefined}
         height={height || undefined}
-        style={fullscreen ? { objectFit: "contain", maxWidth: "100%", maxHeight: "100%" } : shape}
-        className={`block bg-black object-contain ${
-          fullscreen ? "max-h-full max-w-full h-auto w-auto" : "w-full h-auto max-h-[75dvh]"
+        style={fullscreen ? undefined : shape}
+        className={`block bg-black ${
+          fullscreen
+            ? "absolute inset-0 h-full w-full object-cover"
+            : "w-full h-auto max-h-[75dvh] object-contain"
         }`}
       />
 
