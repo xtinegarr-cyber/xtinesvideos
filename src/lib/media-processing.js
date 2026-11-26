@@ -227,15 +227,14 @@ export async function processVideo(input, outDir) {
 
   const copyArgs = ["-y", "-v", "error", "-i", input, "-map", "0:v:0", "-map", "0:a:0?", "-c", "copy", "-movflags", "+faststart", main];
   // Everything else (HEVC from iPhones, 4K, WebM, AVI...) becomes 1080p-max
-  // H.264 with a bitrate cap, which streams smoothly on phones too. The
-  // "superfast" preset converts about a third faster than "veryfast" for
-  // files only slightly bigger, and AAC sound is kept as it is.
+  // H.264. Higher quality than before: CRF 20 + veryfast + 14 Mbps maxrate
+  // keeps more detail while still streaming smoothly. AAC sound is kept as it is.
   const encodeArgs = [
     "-y", "-v", "error", "-i", input,
     "-map", "0:v:0", "-map", "0:a:0?",
     "-vf", "scale='if(gte(iw,ih),min(1920,iw),-2)':'if(gte(iw,ih),-2,min(1920,ih))'",
-    "-c:v", "libx264", "-preset", "superfast", "-crf", "23", "-pix_fmt", "yuv420p",
-    "-maxrate", "6M", "-bufsize", "12M",
+    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+    "-maxrate", "14M", "-bufsize", "28M",
     ...(audio?.codec_name === "aac" ? ["-c:a", "copy"] : ["-c:a", "aac", "-b:a", "160k"]),
     "-movflags", "+faststart",
     main,
